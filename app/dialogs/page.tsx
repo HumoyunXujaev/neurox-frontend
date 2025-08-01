@@ -318,6 +318,7 @@ export default function DialogsPage() {
         offset: 0,
       });
 
+      console.log(response, 'res');
       setMessages(response.data.results.reverse());
 
       // Mark as read
@@ -667,7 +668,7 @@ export default function DialogsPage() {
                                 }`}
                               >
                                 <p className='text-sm whitespace-pre-wrap break-words'>
-                                  {message.text}
+                                  {message?.message}
                                 </p>
                               </div>
                               <div className='flex items-center gap-2 mt-1'>

@@ -22,7 +22,6 @@ export function AgentStatusToggle({
   const [status, setStatus] = useState<'active' | 'inactive'>(initialStatus);
   const { toggleAgentStatus } = useAgentStore();
 
-  // Синхронизируем локальное состояние с props
   useEffect(() => {
     setStatus(initialStatus);
   }, [initialStatus]);
@@ -30,14 +29,11 @@ export function AgentStatusToggle({
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // Немедленно обновляем локальное состояние для мгновенной обратной связи
     const newStatus = status === 'active' ? 'inactive' : 'active';
     setStatus(newStatus);
 
-    // Обновляем глобальное состояние
     toggleAgentStatus(agentId);
 
-    // Вызываем callback если он предоставлен
     if (onStatusChange) {
       onStatusChange(newStatus);
     }

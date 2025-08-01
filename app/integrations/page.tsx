@@ -188,9 +188,9 @@ export default function IntegrationsPage() {
                     href='#'
                     className='text-purple-400 hover:text-purple-300 underline'
                   >
-                    соответствующую подписку
+                    соответствующую подписку.
                   </a>
-                  .
+                  
                 </AlertDescription>
               </Alert>
             </CardContent>

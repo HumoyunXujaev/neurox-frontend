@@ -537,6 +537,7 @@ export default function ServiceBotTestPage() {
         limit: 100,
         offset: 0,
       });
+      console.log(response, 'messages load');
       setMessages(response.data.results || []);
 
       // Scroll to bottom
@@ -580,6 +581,7 @@ export default function ServiceBotTestPage() {
         text: tempMessage.text,
         type: 'text',
       });
+      console.log(response, 'response');
 
       // Update with real message
       setMessages((prev) =>

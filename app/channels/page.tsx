@@ -1,24 +1,22 @@
 'use client';
-
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Plus,
-  Search,
-  MoreVertical,
   RefreshCw,
   CheckCircle,
   XCircle,
   AlertCircle,
+  Settings,
+  HelpCircle,
+  ChevronDown,
+  LinkIcon,
+  MessageSquare,
+  Users,
+  Bot,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -36,32 +34,104 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { useAuth } from '@/contexts/auth-context';
-import { apiClient, InfoFlow } from '@/lib/api/client';
+import { apiClient, type InfoFlow } from '@/lib/api/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-// Channel type icons
-const channelIcons = {
-  telegram: '📱',
-  instagram: '📷',
-  web: '🌐',
-};
-
-// Channel type names
-const channelTypeNames = {
-  telegram: 'Telegram',
-  instagram: 'Instagram',
-  web: 'Web Chat',
+// Channel type icons and colors
+const channelConfig = {
+  telegram: {
+    icon: '📱',
+    name: 'Telegram',
+    color: 'bg-blue-500',
+    description: 'Базовое подключение ИИ-агента',
+    features: [
+      'Подключение ИИ-агента к группе',
+      'Подключение ИИ-агента к личному аккаунту',
+      'Настройка получения заявок',
+    ],
+    available: true,
+  },
+  instagram: {
+    icon: '📷',
+    name: 'Instagram',
+    color: 'bg-pink-500',
+    description: 'Ответы в директе и в комментариях',
+    features: [
+      'Шаблонные ответы',
+      'Ответы только на ключевые слова или только на определенные посты',
+    ],
+    available: true,
+  },
+  whatsapp: {
+    icon: '💬',
+    name: 'WhatsApp',
+    color: 'bg-green-500',
+    description: 'Базовое подключение к WhatsApp',
+    features: ['Настройка ответов в группах'],
+    available: false,
+    comingSoon: true,
+  },
+  avito: {
+    icon: '🏠',
+    name: 'Авито',
+    color: 'bg-blue-600',
+    description:
+      'Подключение одного аккаунта авито для ответов во всех объявлениях',
+    features: [],
+    available: false,
+    comingSoon: true,
+  },
+  avito_pro: {
+    icon: '🏠',
+    name: 'Авито PRO',
+    color: 'bg-purple-600',
+    description: 'PRO подключение к Авито',
+    features: [
+      'Подключение неограниченного количества аккаунтов',
+      'Выбор конкретных объявлений',
+      'Индивидуальные настройки для объявлений',
+    ],
+    available: false,
+    comingSoon: true,
+  },
+  vkontakte: {
+    icon: '🔵',
+    name: 'ВКонтакте',
+    color: 'bg-blue-700',
+    description: 'Подключение к ВКонтакте для ответов в группе',
+    features: [],
+    available: false,
+    comingSoon: true,
+  },
+  salebot: {
+    icon: '🤖',
+    name: 'Salebot',
+    color: 'bg-indigo-600',
+    description: 'Подключение агентов Nextbot к воронкам Salebot',
+    features: [],
+    available: false,
+    comingSoon: true,
+  },
+  jivo: {
+    icon: '💬',
+    name: 'Jivo',
+    color: 'bg-green-600',
+    description: 'Подключение к Jivo для ответов в чатах',
+    features: [],
+    badge: 'Beta',
+    available: false,
+    comingSoon: true,
+  },
 };
 
 export default function ChannelsPage() {
@@ -72,30 +142,31 @@ export default function ChannelsPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<InfoFlow | null>(null);
+  const [viewMode, setViewMode] = useState<'overview' | 'detail'>('overview');
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // New channel form
   const [newChannel, setNewChannel] = useState({
     name: '',
-    type: 'telegram' as 'telegram' | 'instagram' | 'web',
-    data: {},
+    type: 'telegram' as keyof typeof channelConfig,
+    botToken: '', // For Telegram bot token
   });
 
   // Load channels
   const loadChannels = useCallback(async () => {
     if (!user?.company_id) return;
-
     try {
       setIsLoading(true);
-      apiClient.infoFlow.setAuthHeader(process.env.NEXT_PUBLIC_STATS_SERVICE_SECRET_KEY);
+      apiClient.infoFlow.setAuthHeader(
+        process.env.NEXT_PUBLIC_STATS_SERVICE_SECRET_KEY
+      );
       const response = await apiClient.infoFlow.list({
         limit: 100,
       });
-
       // Filter by company
       const companyChannels = response.data.results.filter(
         (channel) => channel.company_id === user.company_id
       );
-
       setChannels(companyChannels);
       console.log(response, 'response');
     } catch (error) {
@@ -124,60 +195,47 @@ export default function ChannelsPage() {
   const handleCreateChannel = async () => {
     if (!newChannel.name.trim() || !user?.company_id) return;
 
-    setIsCreating(true);
+    // Validation for Telegram
+    if (newChannel.type === 'telegram' && !newChannel.botToken.trim()) {
+      toast.error('Введите токен бота для Telegram');
+      return;
+    }
 
+    setIsCreating(true);
     try {
       const channelData = {
         id: Math.floor(Date.now() / 100000),
         name: newChannel.name.trim(),
         type: newChannel.type,
         company_id: user.company_id,
-        data: getDefaultChannelData(newChannel.type),
+        data:
+          newChannel.type === 'telegram'
+            ? {
+                bot_token: newChannel.botToken.trim(),
+                webhook_url: 'http://localhost:3000/test',
+              }
+            : {}, // Empty data for Instagram - will be filled after OAuth
       };
 
-      apiClient.infoFlow.setAuthHeader(process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY);
+      apiClient.infoFlow.setAuthHeader(
+        process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY
+      );
       await apiClient.infoFlow.create(channelData);
-
       toast.success('Канал создан успешно');
       setShowAddDialog(false);
-      setNewChannel({ name: '', type: 'telegram', data: {} });
+      setNewChannel({ name: '', type: 'telegram', botToken: '' });
       loadChannels();
     } catch (error) {
       console.error('Error creating channel:', error);
-      toast.error('Ошибка создания канала');
+      toast.error('Ошибка создания ка��ала');
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  // Get default channel data
-  const getDefaultChannelData = (type: string) => {
-    switch (type) {
-      case 'telegram':
-        return {
-          bot_token: '',
-          webhook_url: '',
-        };
-      case 'instagram':
-        return {
-          access_token: '',
-          instagram_account_id: '',
-          webhook_url: '',
-        };
-      case 'web':
-        return {
-          widget_id: `widget_${Date.now()}`,
-          allowed_domains: [],
-        };
-      default:
-        return {};
     }
   };
 
   // Delete channel
   const handleDeleteChannel = async (channel: InfoFlow) => {
     if (!confirm(`Удалить канал "${channel.name}"?`)) return;
-
     try {
       await apiClient.infoFlow.delete(channel.id);
       toast.success('Канал удален');
@@ -188,27 +246,26 @@ export default function ChannelsPage() {
     }
   };
 
-  // Connect channel (OAuth flow)
+  // Connect channel (OAuth flow for Instagram)
   const handleConnectChannel = async (channel: InfoFlow) => {
+    if (channel.type !== 'instagram') return;
+
+    setIsConnecting(true);
     try {
-      if (channel.type === 'instagram') {
-        const response = await apiClient.infoFlow.getOAuthLink(
-          channel.id,
-          'instagram'
-        );
-        // Open OAuth URL in new window
-        if (response.data.url) {
-          window.open(response.data.url, '_blank');
-          toast.info('Следуйте инструкциям для подключения Instagram');
-        }
-      } else if (channel.type === 'telegram') {
-        toast.info('Настройте бота Telegram через @BotFather и добавьте токен');
-      } else {
-        toast.info('Web канал готов к использованию');
+      const response = await apiClient.infoFlow.getOAuthLink(
+        channel.id,
+        'instagram'
+      );
+      // Open OAuth URL in new window
+      if (response.data.url) {
+        window.open(response.data.url, '_blank');
+        toast.info('Следуйте инструкциям для подключения Instagram');
       }
     } catch (error) {
       console.error('Error connecting channel:', error);
       toast.error('Ошибка подключения канала');
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -221,7 +278,6 @@ export default function ChannelsPage() {
     if (channel.type === 'instagram' && !channel.data?.access_token) {
       return 'not_configured';
     }
-
     // TODO: Add real status check via API
     return 'active';
   };
@@ -255,181 +311,411 @@ export default function ChannelsPage() {
     }
   };
 
+  // Reset form when dialog closes
+  const handleDialogClose = (open: boolean) => {
+    setShowAddDialog(open);
+    if (!open) {
+      setNewChannel({ name: '', type: 'telegram', botToken: '' });
+    }
+  };
+
+  // Render channel overview grid
+  const renderChannelOverview = () => (
+    <div className='max-w-6xl mx-auto space-y-6'>
+      {/* Header */}
+      <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+        <div>
+          <h1 className='text-2xl md:text-3xl font-bold text-foreground'>
+            Каналы
+          </h1>
+        </div>
+      </div>
+
+      {/* Channels Grid */}
+      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+        {Object.entries(channelConfig).map(([type, config]) => {
+          const existingChannel = channels.find((c) => c.type === type);
+          const isAvailable = config.available;
+
+          return (
+            <Card
+              key={type}
+              className={cn(
+                'bg-card border-border transition-all duration-200 relative overflow-hidden',
+                isAvailable
+                  ? 'hover:shadow-lg cursor-pointer hover:scale-[1.02]'
+                  : 'opacity-60 cursor-not-allowed'
+              )}
+              onClick={() => {
+                if (!isAvailable) return;
+                if (existingChannel) {
+                  setSelectedChannel(existingChannel);
+                  setViewMode('detail');
+                } else {
+                  setNewChannel({
+                    name: config.name,
+                    type: type as keyof typeof channelConfig,
+                    botToken: '',
+                  });
+                  setShowAddDialog(true);
+                }
+              }}
+            >
+              {!isAvailable && (
+                <div className='absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-[1px] z-10 flex items-center justify-center'>
+                  <div className='bg-background/90 backdrop-blur-sm border border-border rounded-lg px-4 py-2 shadow-lg'>
+                    <span className='text-sm font-medium text-foreground'>
+                      Скоро доступно
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <CardHeader className='pb-3'>
+                <div className='flex items-start justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-lg flex items-center justify-center text-white shadow-lg',
+                        config.color
+                      )}
+                    >
+                      <span className='text-xl'>{config.icon}</span>
+                    </div>
+                    <div>
+                      <CardTitle className='text-lg text-foreground flex items-center gap-2'>
+                        {config.name}
+                        {config.available && (
+                          <Badge variant='secondary' className='text-xs'>
+                            {config.available}
+                          </Badge>
+                        )}
+                      </CardTitle>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className='space-y-3'>
+                  <p className='text-sm text-muted-foreground'>
+                    {config.description}
+                  </p>
+                  {config.features.length > 0 && (
+                    <ul className='text-xs text-muted-foreground space-y-1'>
+                      {config.features.map((feature, index) => (
+                        <li key={index} className='flex items-start gap-2'>
+                          <span className='text-muted-foreground/60 mt-1'>
+                            •
+                          </span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {existingChannel && isAvailable && (
+                    <div className='pt-2'>
+                      {getStatusBadge(getChannelStatus(existingChannel))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Render channel detail view
+  const renderChannelDetail = () => {
+    if (!selectedChannel) return null;
+
+    const config =
+      channelConfig[selectedChannel.type as keyof typeof channelConfig];
+    const status = getChannelStatus(selectedChannel);
+
+    return (
+      <div className='max-w-4xl mx-auto space-y-6'>
+        {/* Breadcrumb */}
+        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+          <button
+            onClick={() => setViewMode('overview')}
+            className='hover:text-foreground transition-colors'
+          >
+            Каналы
+          </button>
+          <span>/</span>
+          <span className='text-foreground'>{config?.name}</span>
+        </div>
+
+        {/* Connection Status Card */}
+        <Card className='bg-card border-border'>
+          <CardHeader className='flex flex-row items-center justify-between'>
+            <div>
+              <CardTitle className='text-foreground flex items-center gap-3'>
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-lg',
+                    config?.color
+                  )}
+                >
+                  <span>{config?.icon}</span>
+                </div>
+                Подключение {config?.name}
+              </CardTitle>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='text-muted-foreground'
+              >
+                <HelpCircle className='h-4 w-4' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='text-muted-foreground'
+              >
+                <Settings className='h-4 w-4' />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='flex items-center gap-2'>
+              <span className='text-muted-foreground'>Статус подключения:</span>
+              <span className='text-red-500 flex items-center gap-1'>
+                Не подключено
+                <AlertCircle className='h-4 w-4' />
+              </span>
+            </div>
+
+            {selectedChannel.type === 'telegram' && (
+              <div className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label className='text-foreground'>Telegram токен</Label>
+                  <Input
+                    className='bg-background border-border text-foreground'
+                    placeholder='Введите токен бота'
+                    defaultValue={selectedChannel.data?.bot_token || ''}
+                    readOnly
+                  />
+                </div>
+                <div className='flex gap-2'>
+                  <Button className='bg-purple-600 hover:bg-purple-700 text-white'>
+                    <LinkIcon className='h-4 w-4 mr-2' />
+                    ПОДКЛЮЧИТЬ
+                  </Button>
+                  <Button
+                    variant='outline'
+                    className='border-border text-muted-foreground bg-transparent'
+                  >
+                    ОТКЛЮЧИТЬ
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {selectedChannel.type === 'instagram' && (
+              <div className='flex gap-2 flex-wrap'>
+                <Button
+                  className='bg-purple-600 hover:bg-purple-700 text-white'
+                  onClick={() => handleConnectChannel(selectedChannel)}
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? (
+                    <>
+                      <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
+                      Подключение...
+                    </>
+                  ) : (
+                    <>
+                      <LinkIcon className='h-4 w-4 mr-2' />
+                      ПОДКЛЮЧИТЬ ЧЕРЕЗ INSTAGRAM
+                    </>
+                  )}
+                </Button>
+                <Button className='bg-blue-600 hover:bg-blue-700 text-white'>
+                  ПОДКЛЮЧИТЬ ЧЕРЕЗ FACEBOOK
+                </Button>
+                <Button
+                  variant='outline'
+                  className='border-border text-muted-foreground bg-transparent'
+                >
+                  ОТКЛЮЧИТЬ
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Settings Cards */}
+        {selectedChannel.type === 'telegram' && (
+          <>
+            {/* Bot Name */}
+            <Card className='bg-card border-border'>
+              <CardHeader className='flex flex-row items-center justify-between'>
+                <CardTitle className='text-foreground flex items-center gap-2'>
+                  <Bot className='h-5 w-5' />
+                  Имя бота
+                </CardTitle>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='text-muted-foreground'
+                >
+                  <HelpCircle className='h-4 w-4' />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <Input
+                  className='bg-background border-border text-foreground'
+                  placeholder='Имя бота'
+                />
+              </CardContent>
+            </Card>
+
+            {/* Admin Settings */}
+            <Card className='bg-card border-border'>
+              <CardHeader className='flex flex-row items-center justify-between'>
+                <CardTitle className='text-foreground flex items-center gap-2'>
+                  <Shield className='h-5 w-5' />
+                  Админ Telegram
+                </CardTitle>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='text-muted-foreground'
+                >
+                  <HelpCircle className='h-4 w-4' />
+                </Button>
+              </CardHeader>
+              <CardContent className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label className='text-foreground'>ID админа</Label>
+                  <Input
+                    className='bg-background border-border text-foreground'
+                    placeholder='ID админа'
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label className='text-foreground'>Админ пароль</Label>
+                  <Input
+                    type='password'
+                    className='bg-background border-border text-foreground'
+                    placeholder='Админ пароль'
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Instructions */}
+            <div className='space-y-2'>
+              {[
+                'Инструкция подключения бота к NEXTBOT',
+                'Инструкция подключения бота к группе',
+                'Инструкция подключения бота к личному аккаунту',
+                'Инструкция получения заявок в telegram бота',
+              ].map((title, index) => (
+                <Collapsible key={index}>
+                  <CollapsibleTrigger asChild>
+                    <Card className='bg-card border-border hover:bg-accent cursor-pointer transition-colors'>
+                      <CardContent className='p-4'>
+                        <div className='flex items-center justify-between'>
+                          <span className='text-foreground'>{title}</span>
+                          <ChevronDown className='h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180' />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <Card className='bg-muted/50 border-border mt-2'>
+                      <CardContent className='p-4'>
+                        <p className='text-muted-foreground text-sm'>
+                          Инструкция будет здесь...
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </div>
+          </>
+        )}
+
+        {selectedChannel.type === 'instagram' && (
+          <>
+            {/* Direct Settings */}
+            <Card className='bg-card border-border'>
+              <CardHeader>
+                <CardTitle className='text-foreground flex items-center gap-2'>
+                  <MessageSquare className='h-5 w-5' />
+                  Настройки Direct
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='flex items-center justify-between'>
+                  <span className='text-foreground'>
+                    Включить агента в Direct
+                  </span>
+                  <Switch />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Comments Settings */}
+            <Card className='bg-card border-border'>
+              <CardHeader>
+                <CardTitle className='text-foreground flex items-center gap-2'>
+                  <Users className='h-5 w-5' />
+                  Настройки комментариев
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='flex items-center justify-between'>
+                  <span className='text-foreground'>
+                    Включить агента в комментариях
+                  </span>
+                  <Switch />
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className='flex h-screen bg-background'>
       <div className='hidden md:block w-68 flex-shrink-0'>
         <Sidebar />
       </div>
-
       <div className='flex-1 flex flex-col min-w-0'>
         <Header />
-
         <main className='flex-1 p-4 md:p-6 overflow-auto'>
-          <div className='max-w-6xl mx-auto space-y-6'>
-            {/* Header */}
-            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
-              <div>
-                <h1 className='text-2xl md:text-3xl font-bold'>Каналы</h1>
-                <p className='text-muted-foreground mt-1'>
-                  Управление каналами связи с клиентами
-                </p>
-              </div>
-
-              <Button onClick={() => setShowAddDialog(true)}>
-                <Plus className='h-4 w-4 mr-2' />
-                Добавить канал
-              </Button>
-            </div>
-
-            {/* Search */}
-            <div className='relative max-w-md'>
-              <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-              <Input
-                placeholder='Поиск каналов...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-9'
-              />
-            </div>
-
-            {/* Channels Grid */}
-            {isLoading ? (
-              <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className='h-6 w-32 mb-2' />
-                      <Skeleton className='h-4 w-24' />
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className='h-4 w-full mb-2' />
-                      <Skeleton className='h-4 w-48' />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : filteredChannels.length === 0 ? (
-              <Card>
-                <CardContent className='p-12 text-center'>
-                  <p className='text-muted-foreground mb-4'>
-                    {searchQuery
-                      ? 'Каналы не найдены'
-                      : 'У вас пока нет каналов'}
-                  </p>
-                  {!searchQuery && (
-                    <Button onClick={() => setShowAddDialog(true)}>
-                      <Plus className='h-4 w-4 mr-2' />
-                      Создать первый канал
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                {filteredChannels.map((channel) => {
-                  const status = getChannelStatus(channel);
-
-                  return (
-                    <Card key={channel.id} className='relative overflow-hidden'>
-                      <CardHeader className='pb-3'>
-                        <div className='flex items-start justify-between'>
-                          <div className='flex items-center gap-2'>
-                            <span className='text-2xl'>
-                              {channelIcons[
-                                channel.type as keyof typeof channelIcons
-                              ] || '📡'}
-                            </span>
-                            <div>
-                              <CardTitle className='text-lg'>
-                                {channel.name}
-                              </CardTitle>
-                              <CardDescription>
-                                {channelTypeNames[
-                                  channel.type as keyof typeof channelTypeNames
-                                ] || channel.type}
-                              </CardDescription>
-                            </div>
-                          </div>
-
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant='ghost'
-                                size='icon'
-                                className='h-8 w-8'
-                              >
-                                <MoreVertical className='h-4 w-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuItem
-                                onClick={() => setSelectedChannel(channel)}
-                              >
-                                Настройки
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleConnectChannel(channel)}
-                              >
-                                Подключить
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteChannel(channel)}
-                                className='text-destructive'
-                              >
-                                Удалить
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </CardHeader>
-
-                      <CardContent>
-                        <div className='space-y-3'>
-                          {getStatusBadge(status)}
-
-                          <div className='text-sm text-muted-foreground'>
-                            <p>ID: {channel.id}</p>
-                            <p>
-                              Создан:{' '}
-                              {new Date(channel.created_at).toLocaleDateString(
-                                'ru-RU'
-                              )}
-                            </p>
-                          </div>
-
-                          {status === 'not_configured' && (
-                            <Button
-                              size='sm'
-                              className='w-full'
-                              onClick={() => handleConnectChannel(channel)}
-                            >
-                              Настроить подключение
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          {viewMode === 'overview'
+            ? renderChannelOverview()
+            : renderChannelDetail()}
         </main>
       </div>
 
       {/* Add Channel Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+      <Dialog open={showAddDialog} onOpenChange={handleDialogClose}>
+        <DialogContent className='bg-card border-border'>
           <DialogHeader>
-            <DialogTitle>Добавить канал</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className='text-foreground'>
+              Добавить канал
+            </DialogTitle>
+            <DialogDescription className='text-muted-foreground'>
               Создайте новый канал для связи с клиентами
             </DialogDescription>
           </DialogHeader>
-
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
-              <Label htmlFor='channel-name'>Название канала</Label>
+              <Label htmlFor='channel-name' className='text-foreground'>
+                Название канала
+              </Label>
               <Input
                 id='channel-name'
                 placeholder='Например: Основной Telegram'
@@ -437,55 +723,83 @@ export default function ChannelsPage() {
                 onChange={(e) =>
                   setNewChannel({ ...newChannel, name: e.target.value })
                 }
+                className='bg-background border-border text-foreground'
               />
             </div>
-
             <div className='space-y-2'>
-              <Label htmlFor='channel-type'>Тип канала</Label>
+              <Label htmlFor='channel-type' className='text-foreground'>
+                Тип канала
+              </Label>
               <Select
                 value={newChannel.type}
                 onValueChange={(value: any) =>
-                  setNewChannel({ ...newChannel, type: value })
+                  setNewChannel({ ...newChannel, type: value, botToken: '' })
                 }
               >
-                <SelectTrigger id='channel-type'>
+                <SelectTrigger
+                  id='channel-type'
+                  className='bg-background border-border text-foreground'
+                >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='telegram'>
-                    <div className='flex items-center gap-2'>
-                      <span>{channelIcons.telegram}</span>
-                      <span>Telegram</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value='instagram'>
-                    <div className='flex items-center gap-2'>
-                      <span>{channelIcons.instagram}</span>
-                      <span>Instagram</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value='web'>
-                    <div className='flex items-center gap-2'>
-                      <span>{channelIcons.web}</span>
-                      <span>Web Chat</span>
-                    </div>
-                  </SelectItem>
+                <SelectContent className='bg-card border-border'>
+                  {Object.entries(channelConfig)
+                    .filter(([_, config]) => config.available)
+                    .map(([type, config]) => (
+                      <SelectItem
+                        key={type}
+                        value={type}
+                        className='text-foreground hover:bg-accent'
+                      >
+                        <div className='flex items-center gap-2'>
+                          <span>{config.icon}</span>
+                          <span>{config.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
+            {/* Bot Token field for Telegram */}
+            {newChannel.type === 'telegram' && (
+              <div className='space-y-2'>
+                <Label htmlFor='bot-token' className='text-foreground'>
+                  Токен бота <span className='text-red-500'>*</span>
+                </Label>
+                <Input
+                  id='bot-token'
+                  placeholder='Введите токен бота от @BotFather'
+                  value={newChannel.botToken}
+                  onChange={(e) =>
+                    setNewChannel({ ...newChannel, botToken: e.target.value })
+                  }
+                  className='bg-background border-border text-foreground'
+                />
+                <p className='text-xs text-muted-foreground'>
+                  Получите токен у @BotFather в Telegram
+                </p>
+              </div>
+            )}
+          </div>
           <DialogFooter>
             <Button
               variant='outline'
-              onClick={() => setShowAddDialog(false)}
+              onClick={() => handleDialogClose(false)}
               disabled={isCreating}
+              className='border-border text-muted-foreground'
             >
               Отмена
             </Button>
             <Button
               onClick={handleCreateChannel}
-              disabled={!newChannel.name.trim() || isCreating}
+              disabled={
+                !newChannel.name.trim() ||
+                (newChannel.type === 'telegram' &&
+                  !newChannel.botToken.trim()) ||
+                isCreating
+              }
+              className='bg-purple-600 hover:bg-purple-700 text-white'
             >
               {isCreating ? (
                 <>

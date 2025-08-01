@@ -20,5 +20,9 @@ export interface Agent {
   talkativeness: number;
   timezone: string;
   settings: any;
-  is_robot_question: string;
+  is_robot_question:
+    | string
+    | 'tell-that-bot'
+    | 'dont-tell_that-bot'
+    | 'tell-if-asked';
 }

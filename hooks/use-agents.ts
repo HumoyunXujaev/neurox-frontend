@@ -28,7 +28,11 @@ export interface Agent {
   talkativeness: number;
   timezone: string;
   settings: any;
-  is_robot_question: string;
+  is_robot_question:
+    | string
+    | 'tell-that-bot'
+    | 'dont-tell_that-bot'
+    | 'tell-if-asked';
 }
 
 // Маппинг данных из ServiceBot в Agent
@@ -68,7 +72,7 @@ function mapAgentToServiceBotData(agent: Agent): Partial<ServiceBot> {
     talkativeness: agent.talkativeness || 50,
     timezone: agent.timezone || 'UTC',
     settings: agent.settings || {},
-    is_robot_question: agent.is_robot_question || 'no',
+    is_robot_question: agent.is_robot_question,
   };
 }
 
@@ -137,20 +141,26 @@ export function useAgents(options: UseAgentsOptions = {}) {
           id: Math.floor(Date.now() / 100000),
           company_id: user.company_id,
           name: agentData.name || 'Новый агент',
-          prompt: agentData.instructions || 'You are a helpful assistant.',
+          prompt:
+            agentData.instructions ||
+            agentData.prompt ||
+            'You are a helpful assistant.',
           // enable_functions: true,
-          talkativeness: 50.5,
+          talkativeness: agentData.talkativeness || 50.5,
           temperature: agentData.temperature || 0.7,
           timezone: 'UTC',
           // settings: {},
-          is_robot_question: 'no',
-          llm_model: agentData.llmModel || 'gpt-4o-mini-2025-04-16',
+          is_robot_question: 'tell-if-asked',
+          llm_model: agentData.llmModel || 'o4-mini-2025-04-16',
           avatar: agentData.avatar,
         };
 
-        apiClient.serviceBot.setAuthHeader(process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY);
+        apiClient.serviceBot.setAuthHeader(
+          process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY
+        );
         // also need to provide company_id
 
+        console.log(serviceBotData, 'creaating with data');
         const response = await apiClient.serviceBot.create(serviceBotData);
         const newAgent = mapServiceBotToAgent(response.data);
         console.log(response, 'response');
@@ -183,7 +193,9 @@ export function useAgents(options: UseAgentsOptions = {}) {
         });
 
         console.log('updating bot with data:', serviceBotData);
-        apiClient.serviceBot.setAuthHeader(process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY);
+        apiClient.serviceBot.setAuthHeader(
+          process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY
+        );
         const response = await apiClient.serviceBot.update(
           parseInt(agentId),
           serviceBotData
@@ -215,7 +227,9 @@ export function useAgents(options: UseAgentsOptions = {}) {
     try {
       setIsLoading(true);
 
-      apiClient.serviceBot.setAuthHeader(process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY);
+      apiClient.serviceBot.setAuthHeader(
+        process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY
+      );
 
       // Send company_id as a query parameter
       await apiClient.serviceBot.delete(parseInt(agentId), {

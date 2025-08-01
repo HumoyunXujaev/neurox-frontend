@@ -37,23 +37,18 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [copiedAgentCode, setCopiedAgentCode] = useState<string | null>(null);
 
-  // Добавим функцию для принудительного обновления UI
   const [, forceUpdate] = useState({});
 
-  // Синхронизируем агентов из бэкенда со стором (включая localStorage статусы)
   useEffect(() => {
     setStoreAgents(agents);
   }, [agents, setStoreAgents]);
 
   const handleAgentUpdate = async (updatedAgent: Agent) => {
-    // Обновляем в localStorage через store
     updateStoreAgent(updatedAgent);
 
-    // Также обновляем в бэкенде (кроме статуса)
     const { status, ...backendData } = updatedAgent;
     const result = await updateBackendAgent(updatedAgent.id, backendData);
     if (result) {
-      // Merge backend result with localStorage status
       const finalAgent = { ...result, status: updatedAgent.status };
       updateStoreAgent(finalAgent);
     }
@@ -72,13 +67,10 @@ export default function Dashboard() {
       newAgent.avatar = getRandomAvatar();
     }
 
-    // Сначала добавляем в localStorage
     addStoreAgent(newAgent);
 
-    // Затем создаем в бэкенде
     const createdAgent = await createAgent(newAgent);
     if (createdAgent) {
-      // Обновляем с данными из бэкенда, сохраняя localStorage статус
       const finalAgent = { ...createdAgent, status: newAgent.status };
       updateStoreAgent(finalAgent);
       refresh();
@@ -86,7 +78,6 @@ export default function Dashboard() {
   };
 
   const handleCopyAgentCode = (agent: Agent) => {
-    // Преобразуем объект в JSON-строку
     const jsonString = JSON.stringify(agent);
     // Безопасное кодирование в Base64 (поддерживает Unicode)
     const agentCode = btoa(

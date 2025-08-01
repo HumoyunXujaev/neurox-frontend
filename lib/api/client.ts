@@ -183,6 +183,13 @@ class ApiClient {
 
       verifyEmail: (token: string) =>
         this.authClient.post(API_ENDPOINTS.auth.verify, { token }),
+
+      changePassword: (data: ChangePasswordData) => {
+        const token = tokenManager.getAccessToken();
+        return this.authClient.post('/api/v1/auth/change-password', data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      },
     };
   }
 
@@ -367,10 +374,19 @@ class ApiClient {
       },
 
       create: (data: CreateServiceBotData) =>
-        this.backendClient.post<ServiceBot>(
-          API_ENDPOINTS.serviceBot.create,
-          data
-        ),
+        this.backendClient
+          .post<ServiceBot>(API_ENDPOINTS.serviceBot.create, data)
+          .catch((error) => {
+            if (error.response) {
+              console.error('API Error Details:', {
+                status: error.response.status,
+                data: error.response.data,
+                headers: error.response.headers,
+                request: error.request,
+              });
+            }
+            throw error;
+          }),
 
       update: (id: number, data: UpdateServiceBotData) =>
         this.backendClient.patch<ServiceBot>(
@@ -380,6 +396,33 @@ class ApiClient {
 
       delete: (id: number, data: any) =>
         this.backendClient.delete(API_ENDPOINTS.serviceBot.delete(id), data),
+
+      // Test chat endpoints
+      testChat: {
+        // Get chat history with bot
+        getHistory: (serviceBotId: number, page = 1, pageSize = 20) =>
+          this.backendClient.get<TestChatHistoryResponse>(
+            `/api/v1/service_bot/test_chat/chat/`,
+            {
+              params: {
+                service_bot_id: Number(serviceBotId),
+                page,
+                page_size: pageSize,
+              },
+            }
+          ),
+        // Send message to bot and get response
+        sendMessage: (serviceBotId: number, message: TestChatMessage) =>
+          this.backendClient.post<TestChatMessageResponse>(
+            '/api/v1/service_bot/test_chat/chat/',
+            message,
+            {
+              params: {
+                service_bot_id: Number(serviceBotId),
+              },
+            }
+          ),
+      },
     };
   }
 
@@ -428,6 +471,63 @@ class ApiClient {
     };
   }
 
+  get subscription() {
+    return {
+      changePlan: (data: SubscriptionChangeRequest) => {
+        const token = tokenManager.getAccessToken();
+        return this.authClient.post<SubscriptionResponse>(
+          '/api/v1/subscription/change-plan',
+          data,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      },
+
+      purchaseBotcoins: (data: BotcoinPurchaseRequest) => {
+        const token = tokenManager.getAccessToken();
+        return this.authClient.post<BotcoinPurchaseResponse>(
+          '/api/v1/subscription/purchase-botcoins',
+          data,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      },
+
+      useBotcoins: (data: BotcoinUsageRequest) => {
+        const token = tokenManager.getAccessToken();
+        return this.authClient.post<BotcoinPurchaseResponse>(
+          '/api/v1/subscription/use-botcoins',
+          data,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      },
+
+      getBalance: () => {
+        const token = tokenManager.getAccessToken();
+        return this.authClient.get<BotcoinBalanceResponse>(
+          '/api/v1/subscription/balance',
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      },
+
+      getTransactions: (limit = 50, offset = 0) => {
+        const token = tokenManager.getAccessToken();
+        return this.authClient.get<TransactionResponse[]>(
+          `/api/v1/subscription/transactions?limit=${limit}&offset=${offset}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      },
+    };
+  }
+
   get sender() {
     return {
       create: (data: any) => this.backendClient.post('/api/v1/sender/', data),
@@ -460,14 +560,19 @@ interface AuthResponse {
 interface User {
   id: number;
   email: string;
-  name: string;
   phone: string;
-  role: string;
+  name: string;
+  company_name?: string;
   company_id?: number;
+  role: 'admin' | 'operator';
+  subscription_plan: 'test' | 'business' | 'premium' | 'vip' | 'parking';
+  botcoins: number;
+  subscription_end_date?: string;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+  last_login_at?: string;
 }
 
 interface Company {
@@ -499,6 +604,7 @@ interface Chat {
 
 interface Message {
   id: number;
+  message: any;
   appeal_id: number;
   sender: {
     id: string;
@@ -534,7 +640,11 @@ interface ServiceBot {
   temperature: number;
   timezone: string;
   settings: any;
-  is_robot_question: string;
+  is_robot_question:
+    | string
+    | 'tell-that-bot'
+    | 'dont-tell_that-bot'
+    | 'tell-if-asked';
   llm_model: string;
   name: string;
   avatar?: string;
@@ -600,7 +710,11 @@ interface ServiceBotConfigResponse {
   bot_temperature?: number;
   bot_timezone?: string;
   settings?: any;
-  bot_is_robot_question?: string;
+  bot_is_robot_question?:
+    | string
+    | 'tell-that-bot'
+    | 'dont-tell_that-bot'
+    | 'tell-if-asked';
   bot_llm_model?: string;
 }
 
@@ -653,7 +767,11 @@ interface CreateServiceBotData {
   talkativeness: number;
   temperature: number;
   timezone: string;
-  is_robot_question: string;
+  is_robot_question:
+    | string
+    | 'tell-that-bot'
+    | 'dont-tell_that-bot'
+    | 'tell-if-asked';
   llm_model: string;
   name: string;
   avatar?: string;
@@ -703,7 +821,11 @@ interface CreateServiceBotData {
   temperature: number;
   timezone: string;
   // settings: any;
-  is_robot_question: string;
+  is_robot_question:
+    | string
+    | 'tell-that-bot'
+    | 'dont-tell_that-bot'
+    | 'tell-if-asked';
   llm_model: string;
   name: string;
   avatar?: string;
@@ -715,6 +837,94 @@ interface OperatorStatsParams extends PaginationParams {
   company_id?: number;
   start_date?: string;
   end_date?: string;
+}
+
+interface TestChatMessage {
+  date: string;
+  message: string;
+  type: 'text' | 'image' | 'audio';
+  image?: string | null;
+  messenger_chat_id: string;
+}
+
+interface TestChatMessageResponse {
+  id: number;
+  type: string;
+  date: string;
+  sender: {
+    id: string;
+    type: string;
+    name?: string;
+    avatar?: string;
+  };
+  is_sent_by_service: boolean;
+  is_sent_by_bot: boolean;
+  image?: string | null;
+  message: string;
+}
+
+interface TestChatHistoryResponse {
+  page: number;
+  page_size: number;
+  total_pages: number;
+  total_count: number;
+  results: TestChatMessageResponse[];
+}
+
+export interface ChangePasswordData {
+  current_password: string;
+  new_password: string;
+  new_password_confirmation: string;
+}
+
+export interface SubscriptionChangeRequest {
+  plan: 'test' | 'business' | 'premium' | 'vip' | 'parking';
+  payment_id?: string;
+}
+
+export interface BotcoinPurchaseRequest {
+  amount: number;
+  payment_id: string;
+  payment_method: string;
+}
+
+export interface BotcoinUsageRequest {
+  amount: number;
+  description: string;
+}
+
+export interface SubscriptionResponse {
+  old_plan: string;
+  new_plan: string;
+  subscription_end_date: string;
+  monthly_botcoins: number;
+}
+
+export interface BotcoinPurchaseResponse {
+  amount: number;
+  new_balance: number;
+  transaction_id: number;
+}
+
+export interface BotcoinBalanceResponse {
+  permanent_balance: number;
+  monthly_balance: number;
+  total_balance: number;
+  monthly_expires_at: string;
+  total_purchased: number;
+  total_used: number;
+}
+
+export interface TransactionResponse {
+  id: number;
+  amount: number;
+  balance_after: number;
+  transaction_type: string;
+  description?: string;
+  created_at: string;
+  expires_at?: string;
+  payment_id?: string;
+  payment_method?: string;
 }
 
 // Export singleton instance
@@ -741,4 +951,7 @@ export type {
   CreateChatData,
   CreateAppealData,
   UpdateAppealData,
+  TestChatMessage,
+  TestChatMessageResponse,
+  TestChatHistoryResponse,
 };

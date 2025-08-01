@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { apiClient } from '@/lib/api/client';
+
 import { Header } from '@/components/header';
 import { Sidebar } from '@/components/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +51,44 @@ type TabType =
   | 'purchase'
   | 'notifications';
 
+const SUBSCRIPTION_PLANS = {
+  test: {
+    name: 'Тестовый',
+    price: 0,
+    duration: '7 дней',
+    botcoins: 10,
+    color: 'bg-gray-100 text-gray-800',
+  },
+  business: {
+    name: 'Бизнес',
+    price: 2900,
+    duration: 'месяц',
+    botcoins: 310,
+    color: 'bg-blue-100 text-blue-800',
+  },
+  premium: {
+    name: 'Премиум',
+    price: 4000,
+    duration: 'месяц',
+    botcoins: 1520,
+    color: 'bg-purple-100 text-purple-800',
+  },
+  vip: {
+    name: 'VIP',
+    price: 4000,
+    duration: 'месяц',
+    botcoins: 1520,
+    color: 'bg-amber-100 text-amber-800',
+  },
+  parking: {
+    name: 'Парковка',
+    price: 0,
+    duration: '',
+    botcoins: 0,
+    color: 'bg-red-100 text-red-800',
+  },
+};
+
 export default function AccountPage() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>(
@@ -62,7 +102,20 @@ export default function AccountPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [isPurchasingBotcoins, setIsPurchasingBotcoins] = useState(false);
+  const [botcoinAmount, setBotcoinAmount] = useState('100');
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('');
+  const [botcoinBalance, setBotcoinBalance] = useState({
+    permanent_balance: 0,
+    monthly_balance: 0,
+    total_balance: 0,
+    monthly_expires_at: Date(),
+    total_purchased: 0,
+    total_used: 0,
+  });
   // Profile form state
   const [profileData, setProfileData] = useState({
     companyName: '',
@@ -87,6 +140,16 @@ export default function AccountPage() {
     botcoinBalance: 0,
     reservedBotcoin: 0,
   });
+
+  const fetchBotcoinBalance = async () => {
+    try {
+      const response = await apiClient.subscription.getBalance();
+      setBotcoinBalance(response.data);
+      console.log(response, 'res');
+    } catch (error) {
+      console.error('Failed to fetch botcoin balance:', error);
+    }
+  };
 
   const getSubscriptionEndDate = () => {
     if (!user?.created_at) return new Date();
@@ -123,6 +186,9 @@ export default function AccountPage() {
     };
 
     fetchAccountDetails();
+    if (user) {
+      fetchBotcoinBalance();
+    }
   }, [user]);
 
   const tabs = [
@@ -144,22 +210,42 @@ export default function AccountPage() {
     setActivationKey('');
   };
 
-  const handlePasswordChange = () => {
-    if (!newPassword || !confirmPassword) {
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
       toast.error('Заполните все поля');
       return;
     }
+
     if (newPassword !== confirmPassword) {
       toast.error('Пароли не совпадают');
       return;
     }
+
     if (newPassword.length < 6) {
       toast.error('Пароль должен содержать минимум 6 символов');
       return;
     }
-    toast.success('Пароль успешно изменен');
-    setNewPassword('');
-    setConfirmPassword('');
+
+    setIsChangingPassword(true);
+
+    try {
+      await apiClient.auth.changePassword({
+        current_password: oldPassword,
+        new_password: newPassword,
+        new_password_confirmation: newPassword,
+      });
+
+      toast.success('Пароль успешно изменен');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.detail || 'Ошибка при смене пароля';
+      toast.error(errorMessage);
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handlePayment = (paymentType: string) => {
@@ -167,109 +253,221 @@ export default function AccountPage() {
     toast.success(`Переход к оплате: ${paymentType}`);
   };
 
-  const renderAccountTab = () => (
-    <div className='space-y-4 md:space-y-6'>
-      <h2 className='text-xl md:text-2xl font-bold'>Текущий план</h2>
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
-        <Card>
-          <CardContent className='p-4 md:p-6'>
-            <div className='space-y-4'>
-              <div>
-                <div className='text-lg font-semibold'>
-                  Тариф: {accountDetails.plan}
+  const handlePurchaseBotcoins = async () => {
+    const amount = parseFloat(botcoinAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Введите корректное количество боткоинов');
+      return;
+    }
+
+    setIsPurchasingBotcoins(true);
+
+    try {
+      // В реальном приложении здесь будет интеграция с платежной системой
+      // Для демонстрации используем фиктивные данные
+      const response = await apiClient.subscription.purchaseBotcoins({
+        amount,
+        payment_id: `DEMO_${Date.now()}`,
+        payment_method: 'demo',
+      });
+
+      toast.success(`Успешно куплено ${amount} боткоинов`);
+      setBotcoinAmount('100');
+
+      // Обновляем баланс
+      await fetchBotcoinBalance();
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.detail || 'Ошибка при покупке боткоинов';
+      toast.error(errorMessage);
+    } finally {
+      setIsPurchasingBotcoins(false);
+    }
+  };
+
+  // Добавьте функцию для смены тарифа:
+  const handleChangePlan = async (newPlan: string) => {
+    setIsChangingPlan(true);
+
+    try {
+      const response = await apiClient.subscription.changePlan({
+        plan: newPlan as any,
+        payment_id: `DEMO_${Date.now()}`, // В реальном приложении будет реальный payment_id
+      });
+
+      toast.success(`Тариф успешно изменен на ${response.data.new_plan}`);
+
+      // Обновляем данные пользователя
+      await refreshUser();
+      await fetchBotcoinBalance();
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.detail || 'Ошибка при смене тарифа';
+      toast.error(errorMessage);
+    } finally {
+      setIsChangingPlan(false);
+    }
+  };
+
+  const renderAccountTab = () => {
+    const planDetails = user?.subscription_plan
+      ? SUBSCRIPTION_PLANS[user.subscription_plan]
+      : SUBSCRIPTION_PLANS.test;
+    const isSubscriptionActive =
+      user?.subscription_plan !== 'parking' && getDaysRemaining() > 0;
+
+    return (
+      <div className='space-y-4 md:space-y-6'>
+        <h2 className='text-xl md:text-2xl font-bold'>Текущий план</h2>
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
+          <Card>
+            <CardContent className='p-4 md:p-6'>
+              <div className='space-y-4'>
+                <div>
+                  <div className='text-lg font-semibold'>
+                    Тариф: {planDetails.name}
+                  </div>
+                  <Badge className={planDetails.color}>
+                    {user?.subscription_plan}
+                  </Badge>
+                  {user?.subscription_plan === 'test' ||
+                    (user?.subscription_plan == 'parking' && (
+                      <div className='text-muted-foreground'>
+                        Пробная версия
+                      </div>
+                    ))}
                 </div>
-                <div className='text-muted-foreground'>Пробная версия</div>
+                {user?.subscription_plan === 'test' ||
+                  (user?.subscription_plan == 'parking' && (
+                    <>
+                      <div className='space-y-2'>
+                        <div className='text-sm text-muted-foreground'>
+                          Подписка не оплачена.
+                        </div>
+                        <div className='text-sm text-muted-foreground'>
+                          Уведомление об окончании подписки (и за 7 дней) придут
+                          вам в Email
+                        </div>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-lg font-bold'>0 руб в месяц</span>
+                        <Badge variant='secondary'>test</Badge>
+                      </div>
+                      <div className='text-sm text-muted-foreground'>
+                        Версия для тестирования
+                      </div>
+                      <Alert className='bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-600'>
+                        <AlertTriangle className='h-4 w-4 text-amber-600' />
+                        <AlertDescription className='text-amber-800 dark:text-amber-200'>
+                          <strong>Внимание!</strong>
+                          <br />
+                          Требуется оплатить{' '}
+                          <button
+                            onClick={() => setActiveTab('subscription')}
+                            className='underline hover:text-amber-900'
+                          >
+                            подписку!
+                          </button>
+                        </AlertDescription>
+                      </Alert>
+                    </>
+                  ))}
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-4 md:p-6'>
               <div className='space-y-2'>
-                <div className='text-sm text-muted-foreground'>
-                  Подписка не оплачена.
+                <h3 className='font-semibold'>Баланс BotCoin</h3>
+                <div className='flex justify-between items-center'>
+                  <span>Постоянный баланс:</span>
+                  <span className='font-bold'>
+                    {botcoinBalance.permanent_balance}
+                  </span>
                 </div>
-                <div className='text-sm text-muted-foreground'>
-                  Уведомление об окончании подписки (и за 7 дней) придут вам в
-                  Email
+                <div className='flex justify-between items-center'>
+                  <span>куплено боткоинов:</span>
+                  <span className='font-bold'>
+                    {botcoinBalance.total_purchased}
+                  </span>
                 </div>
+                <div className='flex justify-between items-center'>
+                  <span>Ежемесячный баланс:</span>
+                  <span className='font-bold'>
+                    {botcoinBalance.monthly_balance}
+                  </span>
+                </div>
+                <div className='flex justify-between items-center text-lg'>
+                  <span>Общий баланс:</span>
+                  <span className='font-bold text-purple-600'>
+                    {botcoinBalance.total_balance}
+                  </span>
+                </div>
+                {botcoinBalance.monthly_expires_at && (
+                  <div className='text-sm text-muted-foreground'>
+                    Ежемесячные боткоины истекут:{' '}
+                    {new Date(
+                      botcoinBalance.monthly_expires_at
+                    ).toLocaleDateString('ru-RU')}
+                  </div>
+                )}
               </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-lg font-bold'>0 руб в месяц</span>
-                <Badge variant='secondary'>test</Badge>
-              </div>
-              <div className='text-sm text-muted-foreground'>
-                Версия для тестирования
-              </div>
-              <Alert className='bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-600'>
-                <AlertTriangle className='h-4 w-4 text-amber-600' />
-                <AlertDescription className='text-amber-800 dark:text-amber-200'>
-                  <strong>Внимание!</strong>
-                  <br />
-                  Требуется оплатить{' '}
-                  <button
-                    onClick={() => setActiveTab('subscription')}
-                    className='underline hover:text-amber-900'
-                  >
-                    подписку
-                  </button>
-                  !
-                </AlertDescription>
-              </Alert>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className='p-4 md:p-6'>
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between'>
-                <span className='text-sm text-muted-foreground'>
-                  Текущая подписка
-                </span>
-                <span className='text-sm'>
-                  {getDaysRemaining()} из 7 дн осталось
-                </span>
-              </div>
-              <Progress value={getSubscriptionProgress()} className='h-2' />
-              <div className='text-sm text-muted-foreground'>
-                {getDaysRemaining()} дн. до окончания подписки
-              </div>
-              <div className='space-y-2'>
+              <br />
+
+              <div className='space-y-4'>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-muted-foreground'>
-                    Бонусные BotCoin
+                    Текущая подписка
                   </span>
                   <span className='text-sm'>
-                    {accountDetails.botcoinBalance} из 10
+                    {getDaysRemaining()} из 7 дн осталось
                   </span>
                 </div>
-                <Progress value={99.5} className='h-2' />
-                <div className='text-xs text-muted-foreground'>
-                  Обновляются каждый месяц на всех тарифах (кроме тестовых)
+                <Progress value={getSubscriptionProgress()} className='h-2' />
+                <div className='text-sm text-muted-foreground'>
+                  {getDaysRemaining()} дн. до окончания подписки
+                </div>
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-sm text-muted-foreground'>
+                      Бонусные BotCoin
+                    </span>
+                    <span className='text-sm'>{user?.botcoins} из 10</span>
+                  </div>
+                  <Progress value={99.5} className='h-2' />
+                  <div className='text-xs text-muted-foreground'>
+                    Обновляются каждый месяц на всех тарифах (кроме тестовых)
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-sm text-muted-foreground'>
+                      Резервные BotCoin
+                    </span>
+                    <span className='text-sm'>
+                      {accountDetails.reservedBotcoin}
+                    </span>
+                  </div>
+                  <div className='text-xs text-muted-foreground'>
+                    Сохраняются после обновления и расходуются после бонусных
+                  </div>
                 </div>
               </div>
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm text-muted-foreground'>
-                    Резервные BotCoin
-                  </span>
-                  <span className='text-sm'>
-                    {accountDetails.reservedBotcoin}
-                  </span>
-                </div>
-                <div className='text-xs text-muted-foreground'>
-                  Сохраняются после обновления и расходуются после бонусных
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+        <div className='flex justify-end'>
+          <Button
+            onClick={() => setShowActivationDialog(true)}
+            className='bg-purple-600 hover:bg-purple-700 w-full sm:w-auto'
+          >
+            АКТИВИРОВАТЬ КЛЮЧ
+          </Button>
+        </div>
       </div>
-      <div className='flex justify-end'>
-        <Button
-          onClick={() => setShowActivationDialog(true)}
-          className='bg-purple-600 hover:bg-purple-700 w-full sm:w-auto'
-        >
-          АКТИВИРОВАТЬ КЛЮЧ
-        </Button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderProfileTab = () => (
     <div className='space-y-4 md:space-y-6'>
@@ -279,51 +477,19 @@ export default function AccountPage() {
           <Label htmlFor='company-name'>Название компании</Label>
           <Input
             id='company-name'
-            value={profileData.companyName}
+            value={user?.company_name}
             onChange={(e) =>
               setProfileData({ ...profileData, companyName: e.target.value })
             }
             placeholder='Введите название компании'
           />
         </div>
-        <div className='space-y-2'>
-          <Label htmlFor='activity-sphere'>Сфера деятельности</Label>
-          <Input
-            id='activity-sphere'
-            value={profileData.contactName}
-            onChange={(e) =>
-              setProfileData({ ...profileData, contactName: e.target.value })
-            }
-            placeholder='Введите сферу деятельности'
-          />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='company-size'>Размер компании</Label>
-          <Input
-            id='company-size'
-            value={profileData.companySize}
-            onChange={(e) =>
-              setProfileData({ ...profileData, companySize: e.target.value })
-            }
-            placeholder='Введите размер компании'
-          />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='region'>Регион</Label>
-          <Input
-            id='region'
-            value={profileData.region}
-            onChange={(e) =>
-              setProfileData({ ...profileData, region: e.target.value })
-            }
-            placeholder='Введите регион'
-          />
-        </div>
+
         <div className='space-y-2'>
           <Label htmlFor='contact-person'>ФИО для связи</Label>
           <Input
             id='contact-person'
-            value={profileData.contactName}
+            value={user?.name}
             onChange={(e) =>
               setProfileData({ ...profileData, contactName: e.target.value })
             }
@@ -334,7 +500,7 @@ export default function AccountPage() {
           <Label htmlFor='phone'>Телефонный номер</Label>
           <Input
             id='phone'
-            value={profileData.phone}
+            value={user?.phone}
             onChange={(e) =>
               setProfileData({ ...profileData, phone: e.target.value })
             }
@@ -346,65 +512,12 @@ export default function AccountPage() {
           <Input
             id='email'
             type='email'
-            value={profileData.email}
+            value={user?.email}
             onChange={(e) =>
               setProfileData({ ...profileData, email: e.target.value })
             }
             placeholder='Введите email'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='language'>Язык</Label>
-          <Select
-            value={profileData.language}
-            onValueChange={(value) =>
-              setProfileData({ ...profileData, language: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder='Выберите язык' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='ru'>Русский</SelectItem>
-              <SelectItem value='en'>English</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='experience'>Прошлый опыт</Label>
-          <Select
-            value={profileData.experience}
-            onValueChange={(value) =>
-              setProfileData({ ...profileData, experience: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder='Выберите опыт' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='beginner'>Начинающий</SelectItem>
-              <SelectItem value='intermediate'>Средний</SelectItem>
-              <SelectItem value='advanced'>Продвинутый</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='usage'>Способ применения</Label>
-          <Select
-            value={profileData.usage}
-            onValueChange={(value) =>
-              setProfileData({ ...profileData, usage: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder='Выберите способ применения' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='support'>Поддержка клиентов</SelectItem>
-              <SelectItem value='sales'>Продажи</SelectItem>
-              <SelectItem value='marketing'>Маркетинг</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
     </div>
@@ -416,6 +529,32 @@ export default function AccountPage() {
       <Card className='max-w-2xl'>
         <CardContent className='p-4 md:p-6 space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='old-password'>Текущий пароль</Label>
+              <div className='relative'>
+                <Input
+                  id='old-password'
+                  type={showPassword ? 'text' : 'password'}
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder='Введите текущий пароль'
+                />
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  className='absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8'
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className='h-4 w-4' />
+                  ) : (
+                    <Eye className='h-4 w-4' />
+                  )}
+                </Button>
+              </div>
+            </div>
+
             <div className='space-y-2'>
               <Label htmlFor='new-password'>Новый пароль</Label>
               <div className='relative'>
@@ -556,7 +695,7 @@ export default function AccountPage() {
             </div>
             <Button
               className='w-full bg-purple-600 hover:bg-purple-700 mt-6'
-              onClick={() => setShowPaymentDialog(true)}
+              onClick={() => handleChangePlan('business')}
             >
               <CreditCard className='mr-2 h-4 w-4' /> ОПЛАТИТЬ
             </Button>
@@ -610,7 +749,7 @@ export default function AccountPage() {
             </div>
             <Button
               className='w-full bg-purple-600 hover:bg-purple-700 mt-6'
-              onClick={() => setShowPaymentDialog(true)}
+              onClick={() => handleChangePlan('premium')}
             >
               <CreditCard className='mr-2 h-4 w-4' /> ОПЛАТИТЬ
             </Button>
@@ -671,7 +810,7 @@ export default function AccountPage() {
             </div>
             <Button
               className='w-full bg-purple-600 hover:bg-purple-700 mt-6'
-              onClick={() => setShowPaymentDialog(true)}
+              onClick={() => handleChangePlan('vip')}
             >
               <CreditCard className='mr-2 h-4 w-4' /> ОПЛАТИТЬ
             </Button>
@@ -685,6 +824,34 @@ export default function AccountPage() {
     <div className='space-y-4 md:space-y-6'>
       <div className='max-w-md mx-auto'>
         <Card>
+          <CardContent className='p-4 md:p-6'>
+            <div className='space-y-4'>
+              <div>
+                <Label htmlFor='botcoin-amount'>Количество BotCoin</Label>
+                <Input
+                  id='botcoin-amount'
+                  type='number'
+                  value={botcoinAmount}
+                  onChange={(e) => setBotcoinAmount(e.target.value)}
+                  placeholder='Введите количество'
+                  min='1'
+                />
+              </div>
+              <div className='text-sm text-muted-foreground'>
+                Примерная стоимость: {parseFloat(botcoinAmount) * 2.6} руб
+              </div>
+              <Button
+                className='w-full'
+                onClick={handlePurchaseBotcoins}
+                disabled={isPurchasingBotcoins}
+              >
+                {isPurchasingBotcoins ? 'Обработка...' : 'Купить BotCoin'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* <Card>
           <CardHeader className='text-center pb-4'>
             <div className='mx-auto mb-4'>
               <img
@@ -718,6 +885,40 @@ export default function AccountPage() {
             >
               <CreditCard className='mr-2 h-4 w-4' /> ОПЛАТИТЬ
             </Button>
+          </CardContent>
+        </Card> */}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Текущий баланс</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-4'>
+              <div className='flex justify-between'>
+                <span>Постоянный баланс:</span>
+                <span className='font-bold'>
+                  {botcoinBalance.permanent_balance}
+                </span>
+              </div>
+              <div className='flex justify-between'>
+                <span>Куплено всего:</span>
+                <span className='font-bold'>
+                  {botcoinBalance.total_purchased}
+                </span>
+              </div>
+              <div className='flex justify-between'>
+                <span>Ежемесячный баланс:</span>
+                <span className='font-bold'>
+                  {botcoinBalance.monthly_balance}
+                </span>
+              </div>
+              <div className='flex justify-between text-lg'>
+                <span>Общий баланс:</span>
+                <span className='font-bold text-purple-600'>
+                  {botcoinBalance.total_balance}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -144,9 +144,8 @@ export default function KnowledgePage() {
             href='/account?tab=subscription'
             className='text-purple-600 hover:text-purple-700 underline'
           >
-            соответствующую подписку
+            соответствующую подписку.
           </Link>
-          .
         </AlertDescription>
       </Alert>
 

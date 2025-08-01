@@ -49,8 +49,8 @@ export default function SettingsPage() {
   // Настройки агента из бэкенда
   const [enableFunctions, setEnableFunctions] = useState(true);
   const [talkativeness, setTalkativeness] = useState([50]);
-  const [isRobotQuestion, setIsRobotQuestion] = useState(false);
-  const [llmModel, setLlmModel] = useState('gpt-4o-mini-2024-07-18');
+  const [isRobotQuestion, setIsRobotQuestion] = useState('');
+  const [llmModel, setLlmModel] = useState('gpt-4o-mini');
   const [timezone, setTimezone] = useState('UTC');
 
   // Синхронизация с выбранным агентом - обновлено для правильной работы
@@ -61,10 +61,10 @@ export default function SettingsPage() {
       setTemperature([selectedAgent.temperature || 0.7]);
       setEnableFunctions(selectedAgent.enable_functions ?? true);
       setTalkativeness([selectedAgent.talkativeness || 50]);
-      setIsRobotQuestion(selectedAgent.is_robot_question === 'yes');
+      setIsRobotQuestion(selectedAgent.is_robot_question || 'tell-if-asked');
 
       // Исправление для модели - проверяем все возможные поля
-      const model = selectedAgent.llmModel || 'gpt-4o-mini-2024-07-18';
+      const model = selectedAgent.llmModel || 'gpt-4o-mini';
       setLlmModel(model);
 
       setTimezone(selectedAgent.timezone || 'UTC');
@@ -86,7 +86,7 @@ export default function SettingsPage() {
         company_id: user?.company_id,
         temperature: temperature[0],
         talkativeness: talkativeness[0],
-        is_robot_question: isRobotQuestion ? 'yes' : 'no',
+        is_robot_question: isRobotQuestion,
         llmModel: llmModel,
         // llm_model: llmModel, // Дублируем для совместимости
         timezone: timezone,
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                       <SelectItem value='gpt-4o-2024-08-06'>
                         GPT-4o (2024-08-06)
                       </SelectItem>
-                      <SelectItem value='gpt-4o-mini-2024-07-18'>
+                      <SelectItem value='gpt-4o-mini'>
                         GPT-4o Mini (2024-07-18)
                       </SelectItem>
                       <SelectItem value='gpt-4o-search-preview-2025-03-11'>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                   <Label htmlFor='enable-functions'>Включить функции</Label>
                 </div>
 
-                <div className='flex items-center space-x-2'>
+                {/* <div className='flex items-center space-x-2'>
                   <Switch
                     id='robot-question'
                     checked={isRobotQuestion}
@@ -275,6 +275,29 @@ export default function SettingsPage() {
                   <Label htmlFor='robot-question'>
                     Спрашивать "Вы робот?" при первом контакте
                   </Label>
+                </div> */}
+
+                <div className='space-y-2'>
+                  <Label htmlFor='is_robot_question'>Дать знать что бот</Label>
+                  <Select
+                    value={isRobotQuestion}
+                    onValueChange={setIsRobotQuestion}
+                  >
+                    <SelectTrigger id='is_robot_question'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='tell-that-bot'>
+                        сказать что бот
+                      </SelectItem>
+                      <SelectItem value='dont-tell_that-bot'>
+                        не говорить что бот
+                      </SelectItem>
+                      <SelectItem value='tell-if-asked'>
+                        сказать если спросят
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className='space-y-2'>

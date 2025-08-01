@@ -72,7 +72,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side='left' className='p-0 w-68'>
-              <SheetTitle>Меню</SheetTitle>
+              {/* <SheetTitle>Меню</SheetTitle> */}
               <Sidebar onItemClick={() => setIsMobileMenuOpen(false)} />
             </SheetContent>
           </Sheet>
@@ -186,12 +186,12 @@ export function Header() {
           <div className='hidden lg:block text-right text-sm'>
             <div className='flex items-center gap-2'>
               <span className='text-muted-foreground'>Тариф:</span>
-              <Badge variant='outline'>{userInfo.plan}</Badge>
+              <Badge variant='outline'>{user?.subscription_plan}</Badge>
             </div>
             <div className='text-muted-foreground'>
               BotCoin:{' '}
               <span className='text-foreground font-medium'>
-                {userInfo.botcoin}
+                {user?.botcoins}
               </span>
             </div>
           </div>
@@ -199,7 +199,7 @@ export function Header() {
           {/* Mobile User Info */}
           <div className='md:hidden text-xs'>
             <Badge variant='outline' className='text-xs'>
-              {userInfo.plan}
+              {user?.subscription_plan}
             </Badge>
           </div>
 
@@ -271,7 +271,7 @@ export function Header() {
                     <span className='text-muted-foreground'>
                       Доступные BotCoin:
                     </span>
-                    <span>{userInfo.botcoin}</span>
+                    <span>{user?.botcoins}</span>
                   </div>
                   <div className='flex justify-between'>
                     <span className='text-muted-foreground'>

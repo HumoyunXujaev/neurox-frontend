@@ -3,7 +3,7 @@
 export const API_CONFIG = {
   AUTH_SERVICE_URL:
     process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8000',
-  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8100',
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8101',
   BOTS_CONNECTION_SECRET:
     process.env.NEXT_PUBLIC_BOTS_CONNECTION_SECRET || 'secret_key',
   TIMEOUT: 30000,

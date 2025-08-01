@@ -105,12 +105,16 @@ export function AddAgentCard({
               .join('')
           )
         );
+        console.log(decodedAgent, 'decoded')
+
         newAgent = {
           ...decodedAgent,
-          id: Date.now().toString(),
+          id: Math.floor(Date.now() / 100000).toString(),
           name: agentName,
           createdAt: new Date(),
           status: 'active',
+          talkativeness: Number(decodedAgent.talkativeness),
+          temperature: Number(decodedAgent.temperature),
         };
         isFromCode = true;
       } catch (error) {
@@ -120,7 +124,8 @@ export function AddAgentCard({
     } else if (dialogType === 'template') {
       const template = templates[agentTemplate as keyof typeof templates];
       newAgent = {
-        id: Date.now().toString(),
+        id: Math.floor(Date.now() / 100000).toString(),
+
         name: agentName,
         avatar: '',
         status: 'active',
@@ -128,7 +133,7 @@ export function AddAgentCard({
         expenses: { unavailable: 0, botcoin: 0.0 },
         temperature: template.temperature,
         instructions: template.prompt,
-        llmModel: 'gpt-4o-mini-2024-07-18',
+        llmModel: 'gpt-4o-mini',
         // llm_model: "gpt-4o-mini-2024-07-18",
         totalConversations: 0,
         company_id: 1,
@@ -138,11 +143,11 @@ export function AddAgentCard({
         talkativeness: 50,
         timezone: 'UTC',
         settings: {},
-        is_robot_question: 'no',
+        is_robot_question: 'tell-if-asked',
       };
     } else {
       newAgent = {
-        id: Date.now().toString(),
+        id: Math.floor(Date.now() / 100000).toString(),
         name: agentName,
         avatar: '',
         model: '',
@@ -151,7 +156,7 @@ export function AddAgentCard({
         expenses: { unavailable: 0, botcoin: 0.0 },
         temperature: 0.7,
         instructions: agentDescription || 'Ты полезный AI-помощник.',
-        llmModel: 'gpt-4o-mini-2024-07-18',
+        llmModel: 'gpt-4o-mini',
         // llm_model: "gpt-4o-mini-2024-07-18",
         totalConversations: 0,
         company_id: 1,
@@ -160,7 +165,7 @@ export function AddAgentCard({
         talkativeness: 50,
         timezone: 'UTC',
         settings: {},
-        is_robot_question: 'no',
+        is_robot_question: 'tell-if-asked',
       };
     }
 

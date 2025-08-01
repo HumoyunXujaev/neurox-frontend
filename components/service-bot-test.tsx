@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  Suspense,
+} from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Search,
@@ -723,672 +729,687 @@ export default function ServiceBotTestPage() {
     : [];
 
   return (
-    <div
-      className={cn(
-        'flex h-screen bg-background',
-        isFullscreen && 'fixed inset-0 z-50'
-      )}
-    >
-      {/* Desktop Sidebar */}
-      {!isFullscreen && (
-        <div className='hidden md:block w-68 flex-shrink-0'>
-          <Sidebar />
-        </div>
-      )}
+    <Suspense>
+      <div
+        className={cn(
+          'flex h-screen bg-background',
+          isFullscreen && 'fixed inset-0 z-50'
+        )}
+      >
+        {/* Desktop Sidebar */}
+        {!isFullscreen && (
+          <div className='hidden md:block w-68 flex-shrink-0'>
+            <Sidebar />
+          </div>
+        )}
 
-      <div className='flex-1 flex flex-col min-w-0'>
-        {!isFullscreen && <Header />}
+        <div className='flex-1 flex flex-col min-w-0'>
+          {!isFullscreen && <Header />}
 
-        <main className='flex-1 flex overflow-hidden'>
-          {/* Left Panel - Configuration */}
-          <div
-            className={cn(
-              'border-r bg-muted/10',
-              isFullscreen ? 'w-80' : 'w-96'
-            )}
-          >
-            <div className='h-full flex flex-col'>
-              <div className='p-6 border-b'>
-                <h2 className='text-2xl font-bold mb-2'>Тестирование ботов</h2>
-                <p className='text-sm text-muted-foreground'>
-                  Протестируйте работу ваших сервисных ботов в реальном времени
-                </p>
-              </div>
+          <main className='flex-1 flex overflow-hidden'>
+            {/* Left Panel - Configuration */}
+            <div
+              className={cn(
+                'border-r bg-muted/10',
+                isFullscreen ? 'w-80' : 'w-96'
+              )}
+            >
+              <div className='h-full flex flex-col'>
+                <div className='p-6 border-b'>
+                  <h2 className='text-2xl font-bold mb-2'>
+                    Тестирование ботов
+                  </h2>
+                  <p className='text-sm text-muted-foreground'>
+                    Протестируйте работу ваших сервисных ботов в реальном
+                    времени
+                  </p>
+                </div>
 
-              <ScrollArea className='flex-1'>
-                <div className='p-6 space-y-6'>
-                  {/* Bot Selection */}
-                  <div className='space-y-2'>
-                    <Label className='text-sm font-medium'>Выберите бота</Label>
-                    <Select
-                      value={selectedBot?.id.toString()}
-                      onValueChange={(value) => {
-                        const bot = serviceBots.find(
-                          (b) => b.id === parseInt(value)
-                        );
-                        setSelectedBot(bot || null);
-                        setSelectedFlow(null);
-                        if (bot) {
-                          checkBotRelations(bot.id);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className='w-full'>
-                        <SelectValue placeholder='Выберите сервисного бота' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {serviceBots.map((bot) => (
-                          <SelectItem key={bot.id} value={bot.id.toString()}>
-                            <div className='flex items-center gap-2'>
-                              <Avatar className='h-6 w-6'>
-                                <AvatarImage src={bot.avatar} />
-                                <AvatarFallback>
-                                  <Bot className='h-4 w-4' />
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>{bot.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Bot Linking Alert */}
-                  {showLinkingPrompt && selectedBot && (
-                    <Alert className='border-orange-200 bg-orange-50'>
-                      <AlertCircle className='h-4 w-4 text-orange-600' />
-                      <AlertTitle>Бот не привязан к потоку</AlertTitle>
-                      <AlertDescription className='mt-2'>
-                        <p className='text-sm mb-3'>
-                          Для тестирования бота необходимо привязать его к
-                          потоку информации.
-                        </p>
-                        <Select
-                          value={selectedFlow?.id.toString()}
-                          onValueChange={(value) => {
-                            const flow = infoFlows.find(
-                              (f) => f.id.toString() === value
-                            );
-                            setSelectedFlow(flow || null);
-                          }}
-                        >
-                          <SelectTrigger className='w-full mb-3'>
-                            <SelectValue placeholder='Выберите поток для привязки' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {infoFlows.map((flow) => (
-                              <SelectItem
-                                key={flow.id}
-                                value={flow.id.toString()}
-                              >
-                                {flow.name} ({flow.type})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          className='w-full'
-                          onClick={linkBotToFlow}
-                          disabled={!selectedFlow || isLinking}
-                        >
-                          {isLinking ? (
-                            <>
-                              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                              Привязка...
-                            </>
-                          ) : (
-                            <>
-                              <Link className='mr-2 h-4 w-4' />
-                              Привязать к потоку
-                            </>
-                          )}
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Flow Selection */}
-                  {selectedBot && !showLinkingPrompt && (
+                <ScrollArea className='flex-1'>
+                  <div className='p-6 space-y-6'>
+                    {/* Bot Selection */}
                     <div className='space-y-2'>
                       <Label className='text-sm font-medium'>
-                        Выберите поток
+                        Выберите бота
                       </Label>
                       <Select
-                        value={selectedFlow?.id.toString()}
+                        value={selectedBot?.id.toString()}
                         onValueChange={(value) => {
-                          const flow = availableFlows.find(
-                            (f) => f.id === parseInt(value)
+                          const bot = serviceBots.find(
+                            (b) => b.id === parseInt(value)
                           );
-                          setSelectedFlow(flow || null);
+                          setSelectedBot(bot || null);
+                          setSelectedFlow(null);
+                          if (bot) {
+                            checkBotRelations(bot.id);
+                          }
                         }}
-                        disabled={availableFlows.length === 0}
                       >
                         <SelectTrigger className='w-full'>
-                          <SelectValue
-                            placeholder={
-                              availableFlows.length === 0
-                                ? 'Нет доступных потоков'
-                                : 'Выберите поток'
-                            }
-                          />
+                          <SelectValue placeholder='Выберите сервисного бота' />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableFlows.map((flow) => (
-                            <SelectItem
-                              key={flow.id}
-                              value={flow.id.toString()}
-                            >
+                          {serviceBots.map((bot) => (
+                            <SelectItem key={bot.id} value={bot.id.toString()}>
                               <div className='flex items-center gap-2'>
-                                <MessageSquare className='h-4 w-4 text-muted-foreground' />
-                                <span>{flow.name}</span>
-                                <Badge variant='outline' className='ml-auto'>
-                                  {flow.type}
-                                </Badge>
+                                <Avatar className='h-6 w-6'>
+                                  <AvatarImage src={bot.avatar} />
+                                  <AvatarFallback>
+                                    <Bot className='h-4 w-4' />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{bot.name}</span>
                               </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
 
-                  {/* Bot Info */}
-                  {selectedBot && (
-                    <Card>
-                      <CardHeader className='pb-3'>
-                        <CardTitle className='text-sm'>
-                          Информация о боте
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className='space-y-3'>
-                        <div className='flex items-center gap-3'>
-                          <Avatar className='h-12 w-12'>
-                            <AvatarImage src={selectedBot.avatar} />
-                            <AvatarFallback>
-                              <Bot className='h-6 w-6' />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className='font-medium'>{selectedBot.name}</p>
-                            <p className='text-sm text-muted-foreground'>
-                              {selectedBot.llm_model}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className='space-y-2'>
-                          <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>
-                              Температура
-                            </span>
-                            <Badge variant='secondary'>
-                              {selectedBot.temperature}
-                            </Badge>
-                          </div>
-                          <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>
-                              Разговорчивость
-                            </span>
-                            <Badge variant='secondary'>
-                              {selectedBot.talkativeness}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <div className='pt-2'>
-                          <p className='text-xs text-muted-foreground mb-1'>
-                            Промпт
+                    {/* Bot Linking Alert */}
+                    {showLinkingPrompt && selectedBot && (
+                      <Alert className='border-orange-200 bg-orange-50'>
+                        <AlertCircle className='h-4 w-4 text-orange-600' />
+                        <AlertTitle>Бот не привязан к потоку</AlertTitle>
+                        <AlertDescription className='mt-2'>
+                          <p className='text-sm mb-3'>
+                            Для тестирования бота необходимо привязать его к
+                            потоку информации.
                           </p>
-                          <p className='text-xs bg-muted p-2 rounded-md line-clamp-3'>
-                            {selectedBot.prompt}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Start Test Button */}
-                  <Button
-                    onClick={() => initializeChat()}
-                    disabled={
-                      !selectedBot ||
-                      !selectedFlow ||
-                      isLoading ||
-                      showLinkingPrompt
-                    }
-                    className='w-full'
-                    size='lg'
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        Инициализация...
-                      </>
-                    ) : appeal ? (
-                      <>
-                        <RefreshCw className='mr-2 h-4 w-4' />
-                        Перезапустить тест
-                      </>
-                    ) : (
-                      <>
-                        <Zap className='mr-2 h-4 w-4' />
-                        Начать тестирование
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Test Statistics */}
-                  {appeal && testStartTime && (
-                    <Card>
-                      <CardHeader className='pb-3'>
-                        <CardTitle className='text-sm'>
-                          Статистика теста
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className='space-y-2'>
-                        <div className='flex items-center justify-between text-sm'>
-                          <span className='text-muted-foreground'>
-                            Сообщений
-                          </span>
-                          <Badge variant='secondary'>{messages.length}</Badge>
-                        </div>
-                        <div className='flex items-center justify-between text-sm'>
-                          <span className='text-muted-foreground'>
-                            Длительность
-                          </span>
-                          <Badge variant='secondary'>
-                            {Math.floor(
-                              (new Date().getTime() - testStartTime.getTime()) /
-                                1000 /
-                                60
-                            )}{' '}
-                            мин
-                          </Badge>
-                        </div>
-                        <div className='flex items-center justify-between text-sm'>
-                          <span className='text-muted-foreground'>Статус</span>
-                          <Badge
-                            variant={isConnected ? 'default' : 'destructive'}
-                            className='gap-1'
+                          <Select
+                            value={selectedFlow?.id.toString()}
+                            onValueChange={(value) => {
+                              const flow = infoFlows.find(
+                                (f) => f.id.toString() === value
+                              );
+                              setSelectedFlow(flow || null);
+                            }}
                           >
-                            <Circle
-                              className={cn(
-                                'h-2 w-2',
-                                isConnected ? 'fill-green-500' : 'fill-red-500'
-                              )}
-                            />
-                            {isConnected ? 'Подключен' : 'Отключен'}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-
-          {/* Right Panel - Chat */}
-          <div className='flex-1 flex flex-col bg-background'>
-            {/* Chat Header */}
-            <div className='border-b p-4 flex items-center justify-between bg-card'>
-              <div className='flex items-center gap-3'>
-                {selectedBot ? (
-                  <>
-                    <Avatar className='h-10 w-10'>
-                      <AvatarImage src={selectedBot.avatar} />
-                      <AvatarFallback>
-                        <Bot className='h-5 w-5' />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className='font-semibold'>{selectedBot.name}</h3>
-                      <p className='text-sm text-muted-foreground'>
-                        {selectedFlow?.name || 'Выберите поток'}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <h3 className='font-semibold'>Тестовый чат</h3>
-                    <p className='text-sm text-muted-foreground'>
-                      Выберите бота и поток для начала
-                    </p>
-                  </div>
-                )}
-                {isTyping && (
-                  <Badge variant='secondary' className='ml-auto animate-pulse'>
-                    <Bot className='h-3 w-3 mr-1' />
-                    печатает...
-                  </Badge>
-                )}
-              </div>
-
-              <div className='flex items-center gap-2'>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => setSoundEnabled(!soundEnabled)}
-                      >
-                        {soundEnabled ? (
-                          <Volume2 className='h-4 w-4' />
-                        ) : (
-                          <VolumeX className='h-4 w-4' />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {soundEnabled ? 'Выключить звук' : 'Включить звук'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={copyConversation}
-                        disabled={messages.length === 0}
-                      >
-                        <Copy className='h-4 w-4' />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Копировать диалог</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={exportConversation}
-                        disabled={messages.length === 0}
-                      >
-                        <Download className='h-4 w-4' />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Экспортировать диалог</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={clearChat}
-                        disabled={!appeal}
-                      >
-                        <Trash2 className='h-4 w-4' />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Очистить чат</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => setIsFullscreen(!isFullscreen)}
-                      >
-                        {isFullscreen ? (
-                          <Minimize2 className='h-4 w-4' />
-                        ) : (
-                          <Maximize2 className='h-4 w-4' />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {isFullscreen
-                        ? 'Выйти из полноэкранного режима'
-                        : 'Полноэкранный режим'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-
-            {/* Messages Area */}
-            <ScrollArea className='flex-1 p-4'>
-              {!appeal ? (
-                <div className='flex flex-col items-center justify-center h-full text-center'>
-                  <div className='mb-6 relative'>
-                    <div className='absolute inset-0 bg-purple-500/20 blur-3xl rounded-full' />
-                    <Bot className='h-24 w-24 text-purple-500 relative' />
-                  </div>
-                  <h3 className='text-xl font-semibold mb-2'>
-                    Готов к тестированию
-                  </h3>
-                  <p className='text-muted-foreground max-w-md'>
-                    Выберите сервисного бота и поток, затем нажмите "Начать
-                    тестирование", чтобы начать диалог
-                  </p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className='flex flex-col items-center justify-center h-full text-center'>
-                  <Sparkles className='h-12 w-12 text-purple-500 mb-4' />
-                  <h3 className='text-lg font-semibold mb-2'>
-                    Чат инициализирован
-                  </h3>
-                  <p className='text-muted-foreground'>
-                    Напишите первое сообщение, чтобы начать диалог
-                  </p>
-                </div>
-              ) : (
-                <div className='space-y-4'>
-                  <AnimatePresence>
-                    {messages.map((message) => (
-                      <motion.div
-                        key={message.id || message.localId}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className={cn(
-                          'flex gap-3',
-                          message?.sender?.type === 'user'
-                            ? 'justify-end'
-                            : 'justify-start'
-                        )}
-                      >
-                        {message?.sender?.type !== 'user' && (
-                          <Avatar className='h-8 w-8 flex-shrink-0'>
-                            <AvatarImage src={message?.sender?.avatar} />
-                            <AvatarFallback>
-                              <Bot className='h-4 w-4' />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div
-                          className={cn(
-                            'max-w-[70%] space-y-1',
-                            message?.sender?.type === 'user' && 'items-end'
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              'rounded-2xl px-4 py-2 break-words',
-                              message?.sender?.type === 'user'
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted'
-                            )}
+                            <SelectTrigger className='w-full mb-3'>
+                              <SelectValue placeholder='Выберите поток для привязки' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {infoFlows.map((flow) => (
+                                <SelectItem
+                                  key={flow.id}
+                                  value={flow.id.toString()}
+                                >
+                                  {flow.name} ({flow.type})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            className='w-full'
+                            onClick={linkBotToFlow}
+                            disabled={!selectedFlow || isLinking}
                           >
-                            <p className='text-sm whitespace-pre-wrap'>
-                              {message.text}
-                            </p>
-                          </div>
-                          <div
-                            className={cn(
-                              'flex items-center gap-1 text-xs text-muted-foreground px-2',
-                              message?.sender?.type === 'user' && 'justify-end'
-                            )}
-                          >
-                            <span>
-                              {new Date(message.created_at).toLocaleTimeString(
-                                'ru-RU',
-                                {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                }
-                              )}
-                            </span>
-                            {message?.sender?.type === 'user' && (
+                            {isLinking ? (
                               <>
-                                {message.status === 'sending' && (
-                                  <Clock className='h-3 w-3' />
-                                )}
-                                {message.status === 'sent' && (
-                                  <CheckCheck className='h-3 w-3' />
-                                )}
-                                {message.status === 'error' && (
-                                  <AlertCircle className='h-3 w-3 text-destructive' />
-                                )}
+                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                Привязка...
+                              </>
+                            ) : (
+                              <>
+                                <Link className='mr-2 h-4 w-4' />
+                                Привязать к потоку
                               </>
                             )}
-                          </div>
-                        </div>
-                        {message?.sender?.type === 'user' && (
-                          <Avatar className='h-8 w-8 flex-shrink-0'>
-                            <AvatarImage src={selectedBot?.avatar} />
-                            <AvatarFallback>
-                              <User className='h-4 w-4' />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
-                  {isTyping && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className='flex gap-3'
+                    {/* Flow Selection */}
+                    {selectedBot && !showLinkingPrompt && (
+                      <div className='space-y-2'>
+                        <Label className='text-sm font-medium'>
+                          Выберите поток
+                        </Label>
+                        <Select
+                          value={selectedFlow?.id.toString()}
+                          onValueChange={(value) => {
+                            const flow = availableFlows.find(
+                              (f) => f.id === parseInt(value)
+                            );
+                            setSelectedFlow(flow || null);
+                          }}
+                          disabled={availableFlows.length === 0}
+                        >
+                          <SelectTrigger className='w-full'>
+                            <SelectValue
+                              placeholder={
+                                availableFlows.length === 0
+                                  ? 'Нет доступных потоков'
+                                  : 'Выберите поток'
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableFlows.map((flow) => (
+                              <SelectItem
+                                key={flow.id}
+                                value={flow.id.toString()}
+                              >
+                                <div className='flex items-center gap-2'>
+                                  <MessageSquare className='h-4 w-4 text-muted-foreground' />
+                                  <span>{flow.name}</span>
+                                  <Badge variant='outline' className='ml-auto'>
+                                    {flow.type}
+                                  </Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Bot Info */}
+                    {selectedBot && (
+                      <Card>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='text-sm'>
+                            Информация о боте
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className='space-y-3'>
+                          <div className='flex items-center gap-3'>
+                            <Avatar className='h-12 w-12'>
+                              <AvatarImage src={selectedBot.avatar} />
+                              <AvatarFallback>
+                                <Bot className='h-6 w-6' />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className='font-medium'>{selectedBot.name}</p>
+                              <p className='text-sm text-muted-foreground'>
+                                {selectedBot.llm_model}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className='space-y-2'>
+                            <div className='flex items-center justify-between text-sm'>
+                              <span className='text-muted-foreground'>
+                                Температура
+                              </span>
+                              <Badge variant='secondary'>
+                                {selectedBot.temperature}
+                              </Badge>
+                            </div>
+                            <div className='flex items-center justify-between text-sm'>
+                              <span className='text-muted-foreground'>
+                                Разговорчивость
+                              </span>
+                              <Badge variant='secondary'>
+                                {selectedBot.talkativeness}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          <div className='pt-2'>
+                            <p className='text-xs text-muted-foreground mb-1'>
+                              Промпт
+                            </p>
+                            <p className='text-xs bg-muted p-2 rounded-md line-clamp-3'>
+                              {selectedBot.prompt}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Start Test Button */}
+                    <Button
+                      onClick={() => initializeChat()}
+                      disabled={
+                        !selectedBot ||
+                        !selectedFlow ||
+                        isLoading ||
+                        showLinkingPrompt
+                      }
+                      className='w-full'
+                      size='lg'
                     >
-                      <Avatar className='h-8 w-8'>
-                        <AvatarImage src={selectedBot?.avatar} />
+                      {isLoading ? (
+                        <>
+                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                          Инициализация...
+                        </>
+                      ) : appeal ? (
+                        <>
+                          <RefreshCw className='mr-2 h-4 w-4' />
+                          Перезапустить тест
+                        </>
+                      ) : (
+                        <>
+                          <Zap className='mr-2 h-4 w-4' />
+                          Начать тестирование
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Test Statistics */}
+                    {appeal && testStartTime && (
+                      <Card>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='text-sm'>
+                            Статистика теста
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className='space-y-2'>
+                          <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>
+                              Сообщений
+                            </span>
+                            <Badge variant='secondary'>{messages.length}</Badge>
+                          </div>
+                          <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>
+                              Длительность
+                            </span>
+                            <Badge variant='secondary'>
+                              {Math.floor(
+                                (new Date().getTime() -
+                                  testStartTime.getTime()) /
+                                  1000 /
+                                  60
+                              )}{' '}
+                              мин
+                            </Badge>
+                          </div>
+                          <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>
+                              Статус
+                            </span>
+                            <Badge
+                              variant={isConnected ? 'default' : 'destructive'}
+                              className='gap-1'
+                            >
+                              <Circle
+                                className={cn(
+                                  'h-2 w-2',
+                                  isConnected
+                                    ? 'fill-green-500'
+                                    : 'fill-red-500'
+                                )}
+                              />
+                              {isConnected ? 'Подключен' : 'Отключен'}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+
+            {/* Right Panel - Chat */}
+            <div className='flex-1 flex flex-col bg-background'>
+              {/* Chat Header */}
+              <div className='border-b p-4 flex items-center justify-between bg-card'>
+                <div className='flex items-center gap-3'>
+                  {selectedBot ? (
+                    <>
+                      <Avatar className='h-10 w-10'>
+                        <AvatarImage src={selectedBot.avatar} />
                         <AvatarFallback>
-                          <Bot className='h-4 w-4' />
+                          <Bot className='h-5 w-5' />
                         </AvatarFallback>
                       </Avatar>
-                      <div className='bg-muted rounded-2xl px-4 py-2'>
-                        <div className='flex gap-1'>
-                          <motion.div
-                            className='w-2 h-2 bg-muted-foreground rounded-full'
-                            animate={{ opacity: [0.4, 1, 0.4] }}
-                            transition={{
-                              duration: 1.5,
-                              repeat: Infinity,
-                              delay: 0,
-                            }}
-                          />
-                          <motion.div
-                            className='w-2 h-2 bg-muted-foreground rounded-full'
-                            animate={{ opacity: [0.4, 1, 0.4] }}
-                            transition={{
-                              duration: 1.5,
-                              repeat: Infinity,
-                              delay: 0.2,
-                            }}
-                          />
-                          <motion.div
-                            className='w-2 h-2 bg-muted-foreground rounded-full'
-                            animate={{ opacity: [0.4, 1, 0.4] }}
-                            transition={{
-                              duration: 1.5,
-                              repeat: Infinity,
-                              delay: 0.4,
-                            }}
-                          />
-                        </div>
+                      <div>
+                        <h3 className='font-semibold'>{selectedBot.name}</h3>
+                        <p className='text-sm text-muted-foreground'>
+                          {selectedFlow?.name || 'Выберите поток'}
+                        </p>
                       </div>
-                    </motion.div>
+                    </>
+                  ) : (
+                    <div>
+                      <h3 className='font-semibold'>Тестовый чат</h3>
+                      <p className='text-sm text-muted-foreground'>
+                        Выберите бота и поток для начала
+                      </p>
+                    </div>
                   )}
-
-                  <div ref={messagesEndRef} />
+                  {isTyping && (
+                    <Badge
+                      variant='secondary'
+                      className='ml-auto animate-pulse'
+                    >
+                      <Bot className='h-3 w-3 mr-1' />
+                      печатает...
+                    </Badge>
+                  )}
                 </div>
-              )}
-            </ScrollArea>
 
-            {/* Input Area */}
-            {appeal && (
-              <div className='border-t p-4 bg-card'>
-                <div className='flex gap-2'>
-                  <Textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                    placeholder='Введите сообщение...'
-                    className='min-h-[44px] max-h-32 resize-none'
-                    disabled={isSending}
-                  />
-                  <Button
-                    onClick={sendMessage}
-                    disabled={!newMessage.trim() || isSending}
-                    size='icon'
-                    className='h-11 w-11'
-                  >
-                    {isSending ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
-                    ) : (
-                      <Send className='h-4 w-4' />
+                <div className='flex items-center gap-2'>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => setSoundEnabled(!soundEnabled)}
+                        >
+                          {soundEnabled ? (
+                            <Volume2 className='h-4 w-4' />
+                          ) : (
+                            <VolumeX className='h-4 w-4' />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {soundEnabled ? 'Выключить звук' : 'Включить звук'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={copyConversation}
+                          disabled={messages.length === 0}
+                        >
+                          <Copy className='h-4 w-4' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Копировать диалог</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={exportConversation}
+                          disabled={messages.length === 0}
+                        >
+                          <Download className='h-4 w-4' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Экспортировать диалог</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={clearChat}
+                          disabled={!appeal}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Очистить чат</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => setIsFullscreen(!isFullscreen)}
+                        >
+                          {isFullscreen ? (
+                            <Minimize2 className='h-4 w-4' />
+                          ) : (
+                            <Maximize2 className='h-4 w-4' />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isFullscreen
+                          ? 'Выйти из полноэкранного режима'
+                          : 'Полноэкранный режим'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <ScrollArea className='flex-1 p-4'>
+                {!appeal ? (
+                  <div className='flex flex-col items-center justify-center h-full text-center'>
+                    <div className='mb-6 relative'>
+                      <div className='absolute inset-0 bg-purple-500/20 blur-3xl rounded-full' />
+                      <Bot className='h-24 w-24 text-purple-500 relative' />
+                    </div>
+                    <h3 className='text-xl font-semibold mb-2'>
+                      Готов к тестированию
+                    </h3>
+                    <p className='text-muted-foreground max-w-md'>
+                      Выберите сервисного бота и поток, затем нажмите "Начать
+                      тестирование", чтобы начать диалог
+                    </p>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className='flex flex-col items-center justify-center h-full text-center'>
+                    <Sparkles className='h-12 w-12 text-purple-500 mb-4' />
+                    <h3 className='text-lg font-semibold mb-2'>
+                      Чат инициализирован
+                    </h3>
+                    <p className='text-muted-foreground'>
+                      Напишите первое сообщение, чтобы начать диалог
+                    </p>
+                  </div>
+                ) : (
+                  <div className='space-y-4'>
+                    <AnimatePresence>
+                      {messages.map((message) => (
+                        <motion.div
+                          key={message.id || message.localId}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.2 }}
+                          className={cn(
+                            'flex gap-3',
+                            message?.sender?.type === 'user'
+                              ? 'justify-end'
+                              : 'justify-start'
+                          )}
+                        >
+                          {message?.sender?.type !== 'user' && (
+                            <Avatar className='h-8 w-8 flex-shrink-0'>
+                              <AvatarImage src={message?.sender?.avatar} />
+                              <AvatarFallback>
+                                <Bot className='h-4 w-4' />
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div
+                            className={cn(
+                              'max-w-[70%] space-y-1',
+                              message?.sender?.type === 'user' && 'items-end'
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                'rounded-2xl px-4 py-2 break-words',
+                                message?.sender?.type === 'user'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted'
+                              )}
+                            >
+                              <p className='text-sm whitespace-pre-wrap'>
+                                {message.text}
+                              </p>
+                            </div>
+                            <div
+                              className={cn(
+                                'flex items-center gap-1 text-xs text-muted-foreground px-2',
+                                message?.sender?.type === 'user' &&
+                                  'justify-end'
+                              )}
+                            >
+                              <span>
+                                {new Date(
+                                  message.created_at
+                                ).toLocaleTimeString('ru-RU', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                              {message?.sender?.type === 'user' && (
+                                <>
+                                  {message.status === 'sending' && (
+                                    <Clock className='h-3 w-3' />
+                                  )}
+                                  {message.status === 'sent' && (
+                                    <CheckCheck className='h-3 w-3' />
+                                  )}
+                                  {message.status === 'error' && (
+                                    <AlertCircle className='h-3 w-3 text-destructive' />
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          {message?.sender?.type === 'user' && (
+                            <Avatar className='h-8 w-8 flex-shrink-0'>
+                              <AvatarImage src={selectedBot?.avatar} />
+                              <AvatarFallback>
+                                <User className='h-4 w-4' />
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    {isTyping && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className='flex gap-3'
+                      >
+                        <Avatar className='h-8 w-8'>
+                          <AvatarImage src={selectedBot?.avatar} />
+                          <AvatarFallback>
+                            <Bot className='h-4 w-4' />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className='bg-muted rounded-2xl px-4 py-2'>
+                          <div className='flex gap-1'>
+                            <motion.div
+                              className='w-2 h-2 bg-muted-foreground rounded-full'
+                              animate={{ opacity: [0.4, 1, 0.4] }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                delay: 0,
+                              }}
+                            />
+                            <motion.div
+                              className='w-2 h-2 bg-muted-foreground rounded-full'
+                              animate={{ opacity: [0.4, 1, 0.4] }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                delay: 0.2,
+                              }}
+                            />
+                            <motion.div
+                              className='w-2 h-2 bg-muted-foreground rounded-full'
+                              animate={{ opacity: [0.4, 1, 0.4] }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                delay: 0.4,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
                     )}
-                  </Button>
-                </div>
-                <div className='flex items-center justify-between mt-2'>
-                  <div className='flex items-center gap-2'>
+
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Input Area */}
+              {appeal && (
+                <div className='border-t p-4 bg-card'>
+                  <div className='flex gap-2'>
+                    <Textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                      placeholder='Введите сообщение...'
+                      className='min-h-[44px] max-h-32 resize-none'
+                      disabled={isSending}
+                    />
                     <Button
-                      variant='ghost'
-                      size='sm'
-                      className='h-8 px-2'
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim() || isSending}
+                      size='icon'
+                      className='h-11 w-11'
                     >
-                      <Paperclip className='h-3.5 w-3.5 mr-1' />
-                      Файл
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='h-8 px-2'
-                      disabled
-                    >
-                      <Smile className='h-3.5 w-3.5 mr-1' />
-                      Эмодзи
+                      {isSending ? (
+                        <Loader2 className='h-4 w-4 animate-spin' />
+                      ) : (
+                        <Send className='h-4 w-4' />
+                      )}
                     </Button>
                   </div>
-                  <p className='text-xs text-muted-foreground'>
-                    {newMessage.length}/1000
-                  </p>
+                  <div className='flex items-center justify-between mt-2'>
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='h-8 px-2'
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled
+                      >
+                        <Paperclip className='h-3.5 w-3.5 mr-1' />
+                        Файл
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='h-8 px-2'
+                        disabled
+                      >
+                        <Smile className='h-3.5 w-3.5 mr-1' />
+                        Эмодзи
+                      </Button>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>
+                      {newMessage.length}/1000
+                    </p>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type='file'
+                    className='hidden'
+                    accept='image/*,.pdf,.doc,.docx'
+                  />
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type='file'
-                  className='hidden'
-                  accept='image/*,.pdf,.doc,.docx'
-                />
-              </div>
-            )}
-          </div>
-        </main>
+              )}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 }

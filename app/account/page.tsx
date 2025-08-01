@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { apiClient } from '@/lib/api/client';
 
 import { Header } from '@/components/header';
@@ -89,7 +89,7 @@ const SUBSCRIPTION_PLANS = {
   },
 };
 
-export default function AccountPage() {
+function AccountPageContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>(
     (searchParams.get('tab') as TabType) || 'account'
@@ -1056,130 +1056,140 @@ export default function AccountPage() {
   };
 
   return (
-    <div className='flex h-screen bg-background'>
-      {/* Desktop Sidebar */}
-      <div className='hidden md:block w-68 flex-shrink-0'>
-        <Sidebar />
+    <Suspense>
+      <div className='flex h-screen bg-background'>
+        {/* Desktop Sidebar */}
+        <div className='hidden md:block w-68 flex-shrink-0'>
+          <Sidebar />
+        </div>
+        <div className='flex-1 flex flex-col min-w-0'>
+          <Header />
+          <main className='flex-1 overflow-auto'>
+            {/* Tab Navigation */}
+            <div className='border-b bg-background sticky top-0 z-10'>
+              <div className='flex overflow-x-auto'>
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as TabType)}
+                    className={`flex items-center gap-2 px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? 'border-purple-500 text-purple-600'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <tab.icon className='h-4 w-4' />
+                    <span className='hidden sm:inline'>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Tab Content */}
+            <div className='p-4 md:p-6'>
+              <div className='max-w-7xl mx-auto'>{renderTabContent()}</div>
+            </div>
+          </main>
+        </div>
+        {/* Activation Key Dialog */}
+        <Dialog
+          open={showActivationDialog}
+          onOpenChange={setShowActivationDialog}
+        >
+          <DialogContent className='sm:max-w-md mx-4'>
+            <DialogHeader>
+              <DialogTitle>Активация ключа</DialogTitle>
+              <DialogDescription>
+                Введите ключ активации для получения дополнительных возможностей
+                или подписки
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='activation-key'>Ключ активации</Label>
+                <Input
+                  id='activation-key'
+                  value={activationKey}
+                  onChange={(e) => setActivationKey(e.target.value)}
+                  placeholder='XXXX-XXXX-XXXX-XXXX-XXXX'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='agent-select'>
+                  Выберите агента (опционально)
+                </Label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Выберите агента' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='agent1'>Новый агент 1</SelectItem>
+                    <SelectItem value='agent2'>Агент 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Alert className='bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-600'>
+                <Info className='h-4 w-4 text-blue-600' />
+                <AlertDescription className='text-blue-800 dark:text-blue-200'>
+                  Выбор агента требуется только для активации ключей WhatsApp. В
+                  большинстве случаев это поле можно оставить пустым.
+                </AlertDescription>
+              </Alert>
+            </div>
+            <DialogFooter className='flex flex-col sm:flex-row gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => setShowActivationDialog(false)}
+              >
+                ОТМЕНА
+              </Button>
+              <Button
+                onClick={handleActivateKey}
+                className='bg-purple-600 hover:bg-purple-700'
+              >
+                АКТИВИРОВАТЬ КЛЮЧ
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Payment Type Selection Dialog */}
+        <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+          <DialogContent className='sm:max-w-md mx-4'>
+            <DialogHeader>
+              <DialogTitle className='text-center'>
+                Выберите тип оплаты
+              </DialogTitle>
+            </DialogHeader>
+            <div className='space-y-3'>
+              <Button
+                className='w-full bg-purple-600 hover:bg-purple-700 text-white h-12'
+                onClick={() => handlePayment('Оплата картой РФ')}
+              >
+                ОПЛАТА КАРТОЙ РФ
+              </Button>
+              <Button
+                className='w-full bg-purple-600 hover:bg-purple-700 text-white h-12'
+                onClick={() => handlePayment('Оплата картой')}
+              >
+                ОПЛАТА КАРТОЙ
+              </Button>
+              <Button
+                className='w-full bg-purple-600 hover:bg-purple-700 text-white h-12'
+                onClick={() => handlePayment('Оплата по расчетному счету')}
+              >
+                ОПЛАТА ПО РАСЧЕТНОМУ СЧЕТУ
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
-      <div className='flex-1 flex flex-col min-w-0'>
-        <Header />
-        <main className='flex-1 overflow-auto'>
-          {/* Tab Navigation */}
-          <div className='border-b bg-background sticky top-0 z-10'>
-            <div className='flex overflow-x-auto'>
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`flex items-center gap-2 px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'border-purple-500 text-purple-600'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <tab.icon className='h-4 w-4' />
-                  <span className='hidden sm:inline'>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Tab Content */}
-          <div className='p-4 md:p-6'>
-            <div className='max-w-7xl mx-auto'>{renderTabContent()}</div>
-          </div>
-        </main>
-      </div>
-      {/* Activation Key Dialog */}
-      <Dialog
-        open={showActivationDialog}
-        onOpenChange={setShowActivationDialog}
-      >
-        <DialogContent className='sm:max-w-md mx-4'>
-          <DialogHeader>
-            <DialogTitle>Активация ключа</DialogTitle>
-            <DialogDescription>
-              Введите ключ активации для получения дополнительных возможностей
-              или подписки
-            </DialogDescription>
-          </DialogHeader>
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='activation-key'>Ключ активации</Label>
-              <Input
-                id='activation-key'
-                value={activationKey}
-                onChange={(e) => setActivationKey(e.target.value)}
-                placeholder='XXXX-XXXX-XXXX-XXXX-XXXX'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='agent-select'>
-                Выберите агента (опционально)
-              </Label>
-              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Выберите агента' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='agent1'>Новый агент 1</SelectItem>
-                  <SelectItem value='agent2'>Агент 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Alert className='bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-600'>
-              <Info className='h-4 w-4 text-blue-600' />
-              <AlertDescription className='text-blue-800 dark:text-blue-200'>
-                Выбор агента требуется только для активации ключей WhatsApp. В
-                большинстве случаев это поле можно оставить пустым.
-              </AlertDescription>
-            </Alert>
-          </div>
-          <DialogFooter className='flex flex-col sm:flex-row gap-2'>
-            <Button
-              variant='outline'
-              onClick={() => setShowActivationDialog(false)}
-            >
-              ОТМЕНА
-            </Button>
-            <Button
-              onClick={handleActivateKey}
-              className='bg-purple-600 hover:bg-purple-700'
-            >
-              АКТИВИРОВАТЬ КЛЮЧ
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {/* Payment Type Selection Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className='sm:max-w-md mx-4'>
-          <DialogHeader>
-            <DialogTitle className='text-center'>
-              Выберите тип оплаты
-            </DialogTitle>
-          </DialogHeader>
-          <div className='space-y-3'>
-            <Button
-              className='w-full bg-purple-600 hover:bg-purple-700 text-white h-12'
-              onClick={() => handlePayment('Оплата картой РФ')}
-            >
-              ОПЛАТА КАРТОЙ РФ
-            </Button>
-            <Button
-              className='w-full bg-purple-600 hover:bg-purple-700 text-white h-12'
-              onClick={() => handlePayment('Оплата картой')}
-            >
-              ОПЛАТА КАРТОЙ
-            </Button>
-            <Button
-              className='w-full bg-purple-600 hover:bg-purple-700 text-white h-12'
-              onClick={() => handlePayment('Оплата по расчетному счету')}
-            >
-              ОПЛАТА ПО РАСЧЕТНОМУ СЧЕТУ
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </Suspense>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AccountPageContent />
+    </Suspense>
   );
 }

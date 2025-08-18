@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 import {
   Sheet,
   SheetContent,
@@ -77,8 +78,22 @@ export function Header() {
             </SheetContent>
           </Sheet>
           {/* Mobile Logo */}
-          <div className='text-lg font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent'>
+          {/* <div className='text-lg font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent'>
             NEUROX
+          </div> */}
+          <div className='h-12 w-32 relative'>
+            <Image
+              src='/images/logo-light1.png'
+              alt='Логотип Neurox'
+              fill
+              className='object-contain dark:hidden'
+            />
+            <Image
+              src='/images/logo-dark1.png'
+              alt='Логотип Neurox'
+              fill
+              className='object-contain hidden dark:block'
+            />
           </div>
         </div>
 

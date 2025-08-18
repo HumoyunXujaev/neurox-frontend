@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import AnimatedBackground from '@/components/animated-background';
 import { toast } from 'sonner';
-
+import Image from 'next/image';
 type Step = 'email' | 'code' | 'password' | 'success';
 
 export default function ResetPasswordPage() {
@@ -210,11 +210,20 @@ export default function ResetPasswordPage() {
             <ArrowLeft className='w-4 h-4 mr-2' />
             Вернуться к входу
           </Button>
-          <Link
+          {/* <Link
             href='/'
             className='text-xl sm:text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-blue-100 bg-clip-text text-transparent'
           >
             NEUROX
+          </Link> */}
+
+          <Link href='/' className='h-10 w-28 relative block'>
+            <Image
+              src='/images/logo.png'
+              alt='Логотип Neurox'
+              fill
+              className='object-contain'
+            />
           </Link>
         </div>
       </div>

@@ -50,7 +50,7 @@ export default function Home() {
     rippleAnimation.onfinish = () => ripple.remove();
     button.appendChild(ripple);
 
-    router.push('/agents');
+    router.push('/login');
   };
 
   // Initialize client state and generate particles on client only

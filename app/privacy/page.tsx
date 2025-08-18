@@ -21,13 +21,15 @@ import {
   Settings,
 } from 'lucide-react';
 import AnimatedBackground from '@/components/animated-background';
-
+import Image from 'next/image';
 export default function PrivacyPage() {
   const router = useRouter();
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden'>
       <AnimatedBackground />
+
+      {/* Header */}
 
       {/* Header */}
       <div className='absolute top-0 left-0 right-0 z-20 p-4 sm:p-6'>
@@ -40,14 +42,50 @@ export default function PrivacyPage() {
             <ArrowLeft className='w-4 h-4 mr-2' />
             Назад
           </Button>
+
           <Link
+            href='/'
+            className='rounded-full h-16 w-16 relative overflow-hidden ring-2 ring-white/20'
+          >
+            <Image
+              src='/images/logo.png'
+              alt='Логотип Neurox'
+              fill
+              className='object-cover'
+              priority
+            />
+          </Link>
+        </div>
+      </div>
+
+      {/* 
+
+      <div className='absolute top-0 left-0 right-0 z-20 p-4 sm:p-6'>
+        <div className='flex items-center justify-between max-w-4xl mx-auto'>
+          <Button
+            variant='ghost'
+            className='text-white/80 hover:text-white hover:bg-white/10'
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className='w-4 h-4 mr-2' />
+            Назад
+          </Button> */}
+      {/* <Link
             href='/'
             className='text-xl sm:text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-blue-100 bg-clip-text text-transparent'
           >
             NEUROX
+          </Link> */}
+      {/* <Link href='/' className='h-10 w-28 relative block'>
+            <Image
+              src='/images/logo.png'
+              alt='Логотип Neurox'
+              fill
+              className='object-contain'
+            />
           </Link>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className='pt-20 pb-8 px-4 sm:px-6 lg:px-8'>

@@ -17,6 +17,7 @@ import {
   CableIcon as Channels,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const sidebarItems = [
@@ -74,16 +75,50 @@ export function Sidebar({ onItemClick }: SidebarProps) {
   return (
     <div className='pb-12 w-full bg-background border-r flex flex-col h-full'>
       {/* Логотип в сайдбаре - только на десктопе */}
-      <div className='hidden md:block px-7 py-[20px] border-b'>
+      {/* <div className='hidden md:block px-7 py-[20px] border-b'>
         <div className='text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent'>
           NEUROX
         </div>
-      </div>
+      </div> */}
 
       {/* Мобильный заголовок */}
-      <div className='md:hidden px-4 py-4 border-b'>
+      {/* <div className='md:hidden px-4 py-4 border-b'>
         <div className='text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent'>
           NEUROX
+        </div>
+      </div> */}
+
+      <div className='hidden md:block px-7 py-[20px] border-b'>
+        <div className='h-12 w-32 relative'>
+          <Image
+            src='/images/logo-light1.png'
+            alt='Логотип Neurox'
+            fill
+            className='object-contain dark:hidden'
+          />
+          <Image
+            src='/images/logo-dark1.png'
+            alt='Логотип Neurox'
+            fill
+            className='object-contain hidden dark:block'
+          />
+        </div>
+      </div>
+
+      <div className='md:hidden px-4 py-4 border-b'>
+        <div className='h-12 w-32 relative'>
+          <Image
+            src='/images/logo-light1.png'
+            alt='Логотип Neurox'
+            fill
+            className='object-contain dark:hidden'
+          />
+          <Image
+            src='/images/logo-dark1.png'
+            alt='Логотип Neurox'
+            fill
+            className='object-contain hidden dark:block'
+          />
         </div>
       </div>
 

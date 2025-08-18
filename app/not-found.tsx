@@ -4,15 +4,33 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Home, ArrowLeft, Bot, Search } from 'lucide-react';
-
+import Image from 'next/image';
 export default function NotFound() {
   return (
     <div className='min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 flex items-center justify-center p-4'>
       <Card className='w-full max-w-2xl shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm'>
         <CardContent className='p-12 text-center space-y-8'>
           {/* Logo */}
-          <div className='text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent'>
+          {/* <div className='text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent'>
             NEUROX
+          </div> */}
+          <div className='flex justify-center'>
+            <div className='relative h-16 w-40 md:h-20 md:w-48'>
+              <Image
+                src='/images/logo-light1.png'
+                alt='Логотип Neurox'
+                fill
+                className='object-contain dark:hidden'
+                priority
+              />
+              <Image
+                src='/images/logo-dark1.png'
+                alt='Логотип Neurox'
+                fill
+                className='object-contain hidden dark:block'
+                priority
+              />
+            </div>
           </div>
 
           {/* 404 Animation */}

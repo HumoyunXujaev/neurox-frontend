@@ -32,6 +32,7 @@ import {
 import AnimatedBackground from '@/components/animated-background';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -169,6 +170,8 @@ export default function RegisterPage() {
       <AnimatedBackground />
 
       {/* Header */}
+
+      {/* Header */}
       <div className='absolute top-0 left-0 right-0 z-20 p-4 sm:p-6'>
         <div className='flex items-center justify-between max-w-7xl mx-auto'>
           <Button
@@ -179,11 +182,44 @@ export default function RegisterPage() {
             <ArrowLeft className='w-4 h-4 mr-2' />
             На главную
           </Button>
-          <div className='text-xl sm:text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-blue-100 bg-clip-text text-transparent'>
-            NEUROX
+
+          <div className='rounded-full h-16 w-16 relative overflow-hidden ring-2 ring-white/20'>
+            <Image
+              src='/images/logo.png'
+              alt='Логотип Neurox'
+              fill
+              className='object-cover'
+              priority
+            />
           </div>
         </div>
       </div>
+
+      {/* 
+      <div className='absolute top-0 left-0 right-0 z-20 p-4 sm:p-6'>
+        <div className='flex items-center justify-between max-w-7xl mx-auto'>
+          <Button
+            variant='ghost'
+            className='text-white/80 hover:text-white hover:bg-white/10'
+            onClick={() => router.push('/')}
+          >
+            <ArrowLeft className='w-4 h-4 mr-2' />
+            На главную
+          </Button>
+          {/* <div className='text-xl sm:text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-blue-100 bg-clip-text text-transparent'>
+            NEUROX
+          </div> */}
+
+      {/* <div className='h-10 w-28 relative'>
+            <Image
+              src='/images/logo.png'
+              alt='Логотип Neurox'
+              fill
+              className='object-contain'
+            />
+          </div>
+        </div>
+      </div>  */}
 
       {/* Main Content */}
       <div className='flex items-center justify-center min-h-screen p-4 pt-20'>

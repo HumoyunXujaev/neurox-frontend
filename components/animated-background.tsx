@@ -102,7 +102,7 @@ export default function AnimatedBackground() {
       mouseRef.current.active = false;
     };
 
-    const onClick = (e: PointerEvent) => {
+    const onClick = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const cx = e.clientX - rect.left;
       const cy = e.clientY - rect.top;

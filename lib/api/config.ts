@@ -1,9 +1,20 @@
 'use client';
 
+// Функция для принудительного использования HTTPS в продакшене
+const forceHttpsInProduction = (url: string) => {
+  if (process.env.NODE_ENV === 'production' && url.startsWith('http://')) {
+    return url.replace('http://', 'https://');
+  }
+  return url;
+};
+
 export const API_CONFIG = {
-  AUTH_SERVICE_URL:
-    process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8000',
-  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8101',
+  AUTH_SERVICE_URL: forceHttpsInProduction(
+    process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8000'
+  ),
+  BACKEND_URL: forceHttpsInProduction(
+    process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8101'
+  ),
   BOTS_CONNECTION_SECRET:
     process.env.NEXT_PUBLIC_BOTS_CONNECTION_SECRET || 'secret_key',
   TIMEOUT: 30000,

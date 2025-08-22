@@ -37,10 +37,10 @@ export const API_ENDPOINTS = {
   // Main Backend Endpoints
   company: {
     list: '/api/v1/company/',
-    get: (id: number) => `/api/v1/company/${id}`,
+    get: (id: number) => `/api/v1/company/${id}/`,
     create: '/api/v1/company/',
-    update: (id: number) => `/api/v1/company/${id}`,
-    delete: (id: number) => `/api/v1/company/${id}`,
+    update: (id: number) => `/api/v1/company/${id}/`,
+    delete: (id: number) => `/api/v1/company/${id}/`,
   },
 
   infoFlow: {
@@ -56,8 +56,8 @@ export const API_ENDPOINTS = {
   chat: {
     create: '/api/v1/chat/',
     get: (id: number) => `/api/v1/chat/${id}`,
-    list: (infoFlowId: number) => `/api/v1/info_flow/${infoFlowId}/chats/`,
-    messages: (appealId: number) => `/api/v1/message/${appealId}/list/`,
+    list: (infoFlowId: number) => `/api/v1/info_flow/${infoFlowId}/chats`,
+    messages: (appealId: number) => `/api/v1/message/${appealId}/list`,
     sendMessage: '/api/v1/message/',
   },
 
@@ -72,10 +72,10 @@ export const API_ENDPOINTS = {
 
   serviceBot: {
     list: '/api/v1/service_bot/',
-    get: (id: number) => `/api/v1/service_bot/${id}`,
+    get: (id: number) => `/api/v1/service_bot/${id}/`,
     create: '/api/v1/service_bot/',
-    update: (id: number) => `/api/v1/service_bot/${id}`,
-    delete: (id: number) => `/api/v1/service_bot/${id}`,
+    update: (id: number) => `/api/v1/service_bot/${id}/`,
+    delete: (id: number) => `/api/v1/service_bot/${id}/`,
   },
 
   serviceBotRelation: {

@@ -471,6 +471,22 @@ class ApiClient {
     };
   }
 
+  get amocrm() {
+    return {
+      setup: (data: { client_id: string; client_secret: string; redirect_uri: string }) =>
+        this.backendClient.post('/api/v1/integration/amocrm/setup', data),
+
+      getStatus: () =>
+        this.backendClient.get('/api/v1/integration/amocrm/status'),
+
+      getAuthorizationUrl: () =>
+        this.backendClient.get('/api/v1/integration/amocrm/oauth/authorize'),
+      
+      disconnect: () =>
+        this.backendClient.delete('/api/v1/integration/amocrm/disconnect'),
+    };
+  }
+
   get subscription() {
     return {
       changePlan: (data: SubscriptionChangeRequest) => {

@@ -231,8 +231,8 @@ export default function TermsPage() {
                     </div>
                     <div className='bg-blue-50 p-4 rounded-lg'>
                       <p className='text-blue-800 text-sm'>
-                        <strong>BotCoin</strong> — это внутренняя валюта для
-                        дополнительных функций. 1 BotCoin = ₽1.40. BotCoin не
+                        <strong>NXT - NeuroX Token</strong> — это внутренняя валюта для
+                        дополнительных функций. 1 NXT = ₽1.40. NXT не
                         сгорают и не возвращаются.
                       </p>
                     </div>

@@ -204,7 +204,7 @@ export function Header() {
               <Badge variant='outline'>{user?.subscription_plan}</Badge>
             </div>
             <div className='text-muted-foreground'>
-              BotCoin:{' '}
+              NXT:{' '}
               <span className='text-foreground font-medium'>
                 {user?.botcoins}
               </span>
@@ -284,13 +284,13 @@ export function Header() {
                 <div className='space-y-1 text-sm'>
                   <div className='flex justify-between'>
                     <span className='text-muted-foreground'>
-                      Доступные BotCoin:
+                      Доступные NXT:
                     </span>
                     <span>{user?.botcoins}</span>
                   </div>
                   <div className='flex justify-between'>
                     <span className='text-muted-foreground'>
-                      Резервные BotCoin:
+                      Резервные NXT:
                     </span>
                     <span>{userInfo.reserved}</span>
                   </div>

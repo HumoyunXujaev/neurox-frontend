@@ -347,8 +347,9 @@ class ApiClient {
       //   this.backendClient.patch<Appeal>(API_ENDPOINTS.appeal.update(id), data),
 
       assign: (id: number, operatorId: number) =>
-        this.backendClient.post<Appeal>(API_ENDPOINTS.appeal.assign(id), {
-          operator_id: operatorId,
+        this.backendClient.patch<Appeal>(API_ENDPOINTS.appeal.assign(id), {
+          operator: operatorId,
+          is_ruled_by_bot: false
         }),
 
       close: (id: number) =>
@@ -473,15 +474,18 @@ class ApiClient {
 
   get amocrm() {
     return {
-      setup: (data: { client_id: string; client_secret: string; redirect_uri: string }) =>
-        this.backendClient.post('/api/v1/integration/amocrm/setup', data),
+      setup: (data: {
+        client_id: string;
+        client_secret: string;
+        redirect_uri: string;
+      }) => this.backendClient.post('/api/v1/integration/amocrm/setup', data),
 
       getStatus: () =>
         this.backendClient.get('/api/v1/integration/amocrm/status'),
 
       getAuthorizationUrl: () =>
         this.backendClient.get('/api/v1/integration/amocrm/oauth/authorize'),
-      
+
       disconnect: () =>
         this.backendClient.delete('/api/v1/integration/amocrm/disconnect'),
     };
@@ -547,6 +551,27 @@ class ApiClient {
   get sender() {
     return {
       create: (data: any) => this.backendClient.post('/api/v1/sender/', data),
+    };
+  }
+
+  get knowledgeBase() {
+    return {
+      createItem: (data: any) =>
+        this.backendClient.post('/api/v1/knowledge-base/items', data),
+      uploadFile: (formData: FormData) =>
+        this.backendClient.post('/api/v1/knowledge-base/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }),
+      listItems: (params?: any) =>
+        this.backendClient.get('/api/v1/knowledge-base/items', { params }),
+      getItem: (id: number) =>
+        this.backendClient.get(`/api/v1/knowledge-base/items/${id}`),
+      updateItem: (id: number, data: any) =>
+        this.backendClient.patch(`/api/v1/knowledge-base/items/${id}`, data),
+      deleteItem: (id: number) =>
+        this.backendClient.delete(`/api/v1/knowledge-base/items/${id}`),
+      search: (query: string) =>
+        this.backendClient.post('/api/v1/knowledge-base/search', { query }),
     };
   }
 }

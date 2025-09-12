@@ -478,6 +478,7 @@ export default function ServiceBotTestPage() {
           company_id: user.company_id,
           avatar: selectedBot?.avatar,
         });
+        console.log(senderResponse);
         currentSender = senderResponse.data;
         setSender(currentSender);
 
@@ -493,6 +494,7 @@ export default function ServiceBotTestPage() {
             bot_name: bot.name,
           },
         });
+        console.log(chatResponse);
         currentChat = chatResponse.data;
 
         // Create a new appeal
@@ -506,12 +508,28 @@ export default function ServiceBotTestPage() {
           is_ruled_by_bot: false,
           operator: currentSender.id,
         });
+        console.log(appealResponse);
 
         currentAppeal = appealResponse.data;
       } else {
         // Get the chat info
+
         const chatResponse = await apiClient.chat.get(currentAppeal.chat_id);
         currentChat = chatResponse.data;
+        apiClient.serviceBot.setAuthHeader(
+          process.env.NEXT_PUBLIC_MAIN_SERVICE_API_KEY
+        );
+        const senderResponse = await apiClient.sender.create({
+          id: user.id,
+          type: 'user',
+          name: `${user.name} User ${user.id}`,
+          username: user.name,
+          company_id: user.company_id,
+          avatar: selectedBot?.avatar,
+        });
+        console.log(senderResponse);
+        currentSender = senderResponse.data;
+        setSender(currentSender);
       }
 
       setAppeal(currentAppeal);
@@ -746,7 +764,7 @@ export default function ServiceBotTestPage() {
         <div className='flex-1 flex flex-col min-w-0'>
           {!isFullscreen && <Header />}
 
-          <main className='flex-1 flex overflow-hidden'>
+          <main className='flex-1 flex'>
             {/* Left Panel - Configuration */}
             <div
               className={cn(
@@ -834,7 +852,7 @@ export default function ServiceBotTestPage() {
                                   key={flow.id}
                                   value={flow.id.toString()}
                                 >
-                                  {flow.name} ({flow.type})
+                                  {flow?.name} ({flow?.type})
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -893,9 +911,9 @@ export default function ServiceBotTestPage() {
                               >
                                 <div className='flex items-center gap-2'>
                                   <MessageSquare className='h-4 w-4 text-muted-foreground' />
-                                  <span>{flow.name}</span>
+                                  <span>{flow?.name}</span>
                                   <Badge variant='outline' className='ml-auto'>
-                                    {flow.type}
+                                    {flow?.type}
                                   </Badge>
                                 </div>
                               </SelectItem>
@@ -1181,7 +1199,7 @@ export default function ServiceBotTestPage() {
               </div>
 
               {/* Messages Area */}
-              <ScrollArea className='flex-1 p-4'>
+              <ScrollArea className='flex-1'>
                 {!appeal ? (
                   <div className='flex flex-col items-center justify-center h-full text-center'>
                     <div className='mb-6 relative'>

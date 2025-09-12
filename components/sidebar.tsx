@@ -23,7 +23,6 @@ import { usePathname } from 'next/navigation';
 const disabledPages = [
   '/functions',
   '/training',
-  '/knowledge',
   '/website-chat',
   '/analytics',
 ];
@@ -83,25 +82,57 @@ export function Sidebar({ onItemClick }: SidebarProps) {
   return (
     <div className='pb-12 w-full bg-background border-r flex flex-col h-full'>
       {/* Логотип */}
-      <div className='hidden md:block px-7 py-[20px] border-b'>
-        <div className='h-12 w-32 relative'>
+      <div className='hidden md:block px-2 py-[20px] border-b'>
+        <div className='h-8 w-32 relative flex items-center justify-center overflow-hidden'>
           <Image
             src='/images/logo-light1.png'
             alt='Логотип Neurox'
             fill
-            className='object-contain dark:hidden'
+            className='object-contain dark:hidden scale-300'
           />
           <Image
             src='/images/logo-dark1.png'
             alt='Логотип Neurox'
             fill
-            className='object-contain hidden dark:block'
+            className='object-contain hidden dark:block scale-300'
           />
         </div>
+
+        {/* <div className='h-8 w-32 relative'>
+          <Image
+            src='/images/logo-light1.png'
+            alt='Логотип Neurox'
+            height={80}
+            width={80}
+            className='dark:hidden'
+          />
+          <Image
+            src='/images/logo-dark1.png'
+            alt='Логотип Neurox'
+            width={80}
+            height={80}
+            className='hidden dark:block'
+          />
+        </div> */}
       </div>
 
       <div className='md:hidden px-4 py-4 border-b'>
-        <div className='h-12 w-32 relative'>
+        <div className='h-8 w-32 relative flex items-center justify-center overflow-hidden'>
+          <Image
+            src='/images/logo-light1.png'
+            alt='Логотип Neurox'
+            fill
+            className='object-contain dark:hidden scale-200'
+          />
+          <Image
+            src='/images/logo-dark1.png'
+            alt='Логотип Neurox'
+            fill
+            className='object-contain hidden dark:block scale-200'
+          />
+        </div>
+
+        {/* <div className='h-12 w-32 relative'>
           <Image
             src='/images/logo-light1.png'
             alt='Логотип Neurox'
@@ -114,7 +145,7 @@ export function Sidebar({ onItemClick }: SidebarProps) {
             fill
             className='object-contain hidden dark:block'
           />
-        </div>
+        </div> */}
       </div>
 
       <div className='flex-1 space-y-4 py-5'>
@@ -148,7 +179,7 @@ export function Sidebar({ onItemClick }: SidebarProps) {
                                 {/* Полупрозрачный оверлей */}
                                 <div className='absolute inset-0 flex items-center justify-center rounded-md bg-background/80 dark:bg-background/70'>
                                   <span className='text-xs font-semibold text-purple-600 dark:text-purple-300'>
-                                  Скоро доступно
+                                    Скоро доступно
                                   </span>
                                 </div>
                               </div>

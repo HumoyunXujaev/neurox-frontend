@@ -66,7 +66,7 @@ export const API_ENDPOINTS = {
     get: (id: number) => `/api/v1/appeal/${id}`,
     create: '/api/v1/appeal/',
     update: (id: number) => `/api/v1/appeal/${id}`,
-    assign: (id: number) => `/api/v1/appeal/${id}/assign/`,
+    assign: (id: number) => `/api/v1/appeal/${id}/`,
     close: (id: number) => `/api/v1/appeal/${id}/close/`,
   },
 

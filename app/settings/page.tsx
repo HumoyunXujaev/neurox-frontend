@@ -30,7 +30,7 @@ import { useAgents } from '@/hooks/use-agents';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-
+import { FunctionsManager } from '@/components/functions-manager';
 export default function SettingsPage() {
   const router = useRouter();
   const { selectedAgent, updateAgent: updateStoreAgent } = useAgentStore();
@@ -45,6 +45,7 @@ export default function SettingsPage() {
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isGuardrailsOpen, setIsGuardrailsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [functions, setFunctions] = useState<any[]>([]);
 
   // Настройки агента из бэкенда
   const [enableFunctions, setEnableFunctions] = useState(true);
@@ -62,6 +63,7 @@ export default function SettingsPage() {
       setEnableFunctions(selectedAgent.enable_functions ?? true);
       setTalkativeness([selectedAgent.talkativeness || 50]);
       setIsRobotQuestion(selectedAgent.is_robot_question || 'tell-if-asked');
+      setFunctions(selectedAgent.settings || []);
 
       // Исправление для модели - проверяем все возможные поля
       const model = selectedAgent.llmModel || 'gpt-4o-mini';
@@ -91,6 +93,7 @@ export default function SettingsPage() {
         // llm_model: llmModel, // Дублируем для совместимости
         timezone: timezone,
         prompt: instructions,
+        settings: functions,
         // instructions: instructions, // Дублируем для совместимости
         // enable_functions: enableFunctions,
       };
@@ -426,6 +429,11 @@ export default function SettingsPage() {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
+
+            <FunctionsManager
+              functions={functions}
+              setFunctions={setFunctions}
+            />
 
             {/* Tools */}
             <Collapsible open={isToolsOpen} onOpenChange={setIsToolsOpen}>

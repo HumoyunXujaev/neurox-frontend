@@ -60,21 +60,21 @@ const SUBSCRIPTION_PLANS = {
     color: 'bg-gray-100 text-gray-800',
   },
   business: {
-    name: 'Бизнес',
+    name: 'Start',
     price: 2900,
-    duration: 'месяц',
+    duration: '3 месяца',
     botcoins: 310,
     color: 'bg-blue-100 text-blue-800',
   },
   premium: {
-    name: 'Премиум',
+    name: 'Pro',
     price: 4000,
-    duration: 'месяц',
+    duration: '6 месяцев',
     botcoins: 1520,
     color: 'bg-purple-100 text-purple-800',
   },
   vip: {
-    name: 'VIP',
+    name: 'Enterprise',
     price: 4000,
     duration: 'месяц',
     botcoins: 1520,
@@ -196,7 +196,7 @@ function AccountPageContent() {
     { id: 'profile', label: 'ПРОФИЛЬ', icon: User },
     { id: 'security', label: 'БЕЗОПАСНОСТЬ', icon: Shield },
     { id: 'subscription', label: 'ОПЛАТА ПОДПИСКИ', icon: CreditCard },
-    { id: 'purchase', label: 'ПОКУПКА BOTCOIN', icon: ShoppingCart },
+    { id: 'purchase', label: 'ПОКУПКА NXT', icon: ShoppingCart },
     { id: 'notifications', label: 'УВЕДОМЛЕНИЯ', icon: Bell },
   ];
 
@@ -257,7 +257,7 @@ function AccountPageContent() {
     const amount = parseFloat(botcoinAmount);
 
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Введите корректное количество боткоинов');
+      toast.error('Введите корректное количество токенов');
       return;
     }
 
@@ -272,14 +272,14 @@ function AccountPageContent() {
         payment_method: 'demo',
       });
 
-      toast.success(`Успешно куплено ${amount} боткоинов`);
+      toast.success(`Успешно куплено ${amount} nxt`);
       setBotcoinAmount('100');
 
       // Обновляем баланс
       await fetchBotcoinBalance();
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.detail || 'Ошибка при покупке боткоинов';
+        error.response?.data?.detail || 'Ошибка при покупке nxt';
       toast.error(errorMessage);
     } finally {
       setIsPurchasingBotcoins(false);
@@ -379,7 +379,7 @@ function AccountPageContent() {
           <Card>
             <CardContent className='p-4 md:p-6'>
               <div className='space-y-2'>
-                <h3 className='font-semibold'>Баланс BotCoin</h3>
+                <h3 className='font-semibold'>Баланс NXT</h3>
                 <div className='flex justify-between items-center'>
                   <span>Постоянный баланс:</span>
                   <span className='font-bold'>
@@ -387,7 +387,7 @@ function AccountPageContent() {
                   </span>
                 </div>
                 <div className='flex justify-between items-center'>
-                  <span>куплено боткоинов:</span>
+                  <span>куплено neurox token:</span>
                   <span className='font-bold'>
                     {botcoinBalance.total_purchased}
                   </span>
@@ -406,7 +406,7 @@ function AccountPageContent() {
                 </div>
                 {botcoinBalance.monthly_expires_at && (
                   <div className='text-sm text-muted-foreground'>
-                    Ежемесячные боткоины истекут:{' '}
+                    Ежемесячные nxt истекут:{' '}
                     {new Date(
                       botcoinBalance.monthly_expires_at
                     ).toLocaleDateString('ru-RU')}
@@ -431,7 +431,7 @@ function AccountPageContent() {
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between'>
                     <span className='text-sm text-muted-foreground'>
-                      Бонусные BotCoin
+                      Бонусные NXT
                     </span>
                     <span className='text-sm'>{user?.botcoins} из 10</span>
                   </div>
@@ -443,7 +443,7 @@ function AccountPageContent() {
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between'>
                     <span className='text-sm text-muted-foreground'>
-                      Резервные BotCoin
+                      Резервные NXT
                     </span>
                     <span className='text-sm'>
                       {accountDetails.reservedBotcoin}
@@ -657,24 +657,24 @@ function AccountPageContent() {
                 className='h-26 w-26 md:h-26 md:w-26 mx-auto'
               />
             </div>
-            <CardTitle className='text-lg md:text-xl'>Бизнес</CardTitle>
+            <CardTitle className='text-lg md:text-xl'>START</CardTitle>
             <div className='text-2xl md:text-3xl font-bold text-purple-600'>
-              ₽2900
+              600,000 сум
             </div>
           </CardHeader>
           <CardContent className='space-y-3'>
             <div className='space-y-2 text-sm'>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>310 бонусных BotCoin</span>
+                <span>310 бонусных NXT</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>Возможность докупать BotCoin</span>
+                <span>Возможность докупать NXT (neurox tokens)</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>Подписка на месяц</span>
+                <span>Подписка на 3 месяцa</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
@@ -711,24 +711,24 @@ function AccountPageContent() {
                 className='h-26 w-26 md:h-26 md:w-26 mx-auto'
               />
             </div>
-            <CardTitle className='text-lg md:text-xl'>Премиум</CardTitle>
+            <CardTitle className='text-lg md:text-xl'>PRO</CardTitle>
             <div className='text-2xl md:text-3xl font-bold text-purple-600'>
-              ₽4000
+             800,000 сум
             </div>
           </CardHeader>
           <CardContent className='space-y-3'>
             <div className='space-y-2 text-sm'>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>1520 бонусных BotCoin</span>
+                <span>1520 бонусных NXT</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>Возможность докупать BotCoin</span>
+                <span>Возможность докупать NXT</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>Подписка на месяц</span>
+                <span>Подписка на 6 месяцев</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
@@ -765,24 +765,24 @@ function AccountPageContent() {
                 className='h-26 w-26 md:h-26 md:w-26 mx-auto'
               />
             </div>
-            <CardTitle className='text-lg md:text-xl'>VIP</CardTitle>
+            <CardTitle className='text-lg md:text-xl'>ENTERPRISE</CardTitle>
             <div className='text-2xl md:text-3xl font-bold text-purple-600'>
-              ₽50000
+              цена по запросу
             </div>
           </CardHeader>
           <CardContent className='space-y-3'>
             <div className='space-y-2 text-sm'>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>1520 бонусных BotCoin</span>
+                <span>1520 бонусных NXT</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>Возможность докупать BotCoin</span>
+                <span>Возможность докупать NXT</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
-                <span>Подписка на месяц</span>
+                <span>Подписка по запросу</span>
               </div>
               <div className='flex items-start gap-2'>
                 <div className='w-1 h-1 bg-current rounded-full mt-2 flex-shrink-0'></div>
@@ -827,7 +827,7 @@ function AccountPageContent() {
           <CardContent className='p-4 md:p-6'>
             <div className='space-y-4'>
               <div>
-                <Label htmlFor='botcoin-amount'>Количество BotCoin</Label>
+                <Label htmlFor='botcoin-amount'>Количество NXT</Label>
                 <Input
                   id='botcoin-amount'
                   type='number'
@@ -845,7 +845,7 @@ function AccountPageContent() {
                 onClick={handlePurchaseBotcoins}
                 disabled={isPurchasingBotcoins}
               >
-                {isPurchasingBotcoins ? 'Обработка...' : 'Купить BotCoin'}
+                {isPurchasingBotcoins ? 'Обработка...' : 'Купить NXT'}
               </Button>
             </div>
           </CardContent>

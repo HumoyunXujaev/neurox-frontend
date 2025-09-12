@@ -55,7 +55,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
                 <CardTitle className='text-lg font-medium'>
-                  Расход Botcoins
+                  Расход NXT
                 </CardTitle>
                 <Button
                   variant='outline'
@@ -70,8 +70,8 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className='text-sm text-muted-foreground mb-4 space-y-1'>
-                  <div>Общие затраты за выбранный период: 0.03 Botcoins</div>
-                  <div>Средние затраты на диалог: 0.03 Botcoins/диалог</div>
+                  <div>Общие затраты за выбранный период: 0.03 NXT</div>
+                  <div>Средние затраты на диалог: 0.03 NXT/диалог</div>
                   <div className='flex items-center gap-2 mt-2'>
                     <div className='w-3 h-3 bg-purple-500 rounded-full'></div>
                     <span>Главный текст</span>
@@ -80,7 +80,7 @@ export default function AnalyticsPage() {
                 <ChartContainer
                   config={{
                     value: {
-                      label: 'BotCoin',
+                      label: 'NXT',
                       color: 'hsl(var(--chart-1))',
                     },
                   }}
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
                   </ResponsiveContainer>
                 </ChartContainer>
                 <div className='text-xs text-muted-foreground mt-2'>
-                  Отображается только расходы, превышающие 0.01 Botcoins
+                  Отображается только расходы, превышающие 0.01 NXT
                 </div>
               </CardContent>
             </Card>

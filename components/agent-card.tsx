@@ -250,7 +250,7 @@ export function AgentCard({
               </div>
               <div className='flex justify-between text-xs'>
                 <span>
-                  Расход BotCoin: {agent?.expenses?.botcoin?.toFixed(2) || 0}
+                  Расход NXT: {agent?.expenses?.botcoin?.toFixed(2) || 0}
                 </span>
               </div>
             </div>

@@ -162,7 +162,7 @@ function ChatPageContent() {
       setBotcoinBalance(response.data.total_balance);
     } catch (error) {
       console.error('Failed to fetch botcoin balance:', error);
-      toast.error('Не удалось загрузить баланс боткоинов');
+      toast.error('Не удалось загрузить баланс nxt');
     } finally {
       setIsLoadingBalance(false);
     }
@@ -187,7 +187,7 @@ function ChatPageContent() {
       return true;
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.detail || 'Недостаточно боткоинов';
+        error.response?.data?.detail || 'Недостаточно nxt';
       toast.error(errorMessage);
       return false;
     }
@@ -1508,7 +1508,7 @@ function ChatPageContent() {
                           <CardTitle className='text-sm font-medium flex items-center justify-between'>
                             <div className='flex items-center'>
                               <Activity className='w-4 h-4 mr-2' />
-                              Использование BotCoin
+                              Использование NXT
                             </div>
                             <Button
                               size='sm'
@@ -1567,7 +1567,7 @@ function ChatPageContent() {
                             <Alert className='bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-600'>
                               <AlertCircle className='h-4 w-4 text-amber-600' />
                               <AlertDescription className='text-xs text-amber-800 dark:text-amber-200'>
-                                Низкий баланс боткоинов!
+                                Низкий баланс nxt!
                                 <a
                                   href='/account?tab=purchase'
                                   className='underline ml-1 font-medium'

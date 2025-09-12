@@ -34,6 +34,8 @@ import {
   Check,
   Clock,
   X,
+  Hand,
+  Loader2,
   AlertCircle,
   User,
 } from 'lucide-react';
@@ -48,6 +50,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { tokenManager } from '@/lib/auth/token-manager';
 import { getWebSocketUrl } from '@/lib/api/config';
+import { se } from 'date-fns/locale';
 
 interface ExtendedAppeal extends Appeal {
   lastMessage?: string;
@@ -55,6 +58,7 @@ interface ExtendedAppeal extends Appeal {
   unreadCount?: number;
   clientName?: string;
   clientAvatar?: string;
+  operator?: number | null;
 }
 
 interface WSMessage {
@@ -85,6 +89,7 @@ export default function DialogsPage() {
     status: 'all',
     search: '',
   });
+  const [isAssigning, setIsAssigning] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -150,7 +155,7 @@ export default function DialogsPage() {
   }, [user]);
 
   const handleWebSocketMessage = (message: WSMessage) => {
-    switch (message.type) {
+    switch (message?.type) {
       case 'new_appeal':
         loadAppeals();
         break;
@@ -338,11 +343,39 @@ export default function DialogsPage() {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedAppeal || isSending) return;
+    if (
+      !newMessage.trim() ||
+      !selectedAppeal ||
+      isSending ||
+      !selectedAppeal.operator
+    ) {
+      if (!selectedAppeal?.operator) {
+        toast.error('Сначала возьмите обращение в работу');
+      }
+      return;
+    }
+
+    // if (!newMessage.trim() || !selectedAppeal || isSending) return;
 
     const messageText = newMessage.trim();
     setNewMessage('');
     setIsSending(true);
+
+    const tempMessage: Message = {
+      id: Date.now(), // Временный ID
+      text: messageText,
+      attachments: [],
+      message: messageText,
+      type: 'text',
+      created_at: new Date().toISOString(),
+      sender: {
+        id: '1',
+        type: 'bot',
+        name: 'Оператор',
+        avatar: selectedAgent?.avatar,
+      },
+      appeal_id: selectedAppeal.id,
+    };
 
     try {
       const response = await apiClient.chat.sendMessage({
@@ -350,8 +383,9 @@ export default function DialogsPage() {
         text: messageText,
         type: 'text',
       });
+      console.log(response);
 
-      setMessages((prev) => [...prev, response.data]);
+      setMessages((prev) => [...prev, tempMessage]);
 
       // Update last message in appeals list
       setAppeals((prev) =>
@@ -360,7 +394,7 @@ export default function DialogsPage() {
             ? {
                 ...appeal,
                 lastMessage: messageText,
-                lastMessageTime: response.data.created_at,
+                lastMessageTime: tempMessage.created_at,
               }
             : appeal
         )
@@ -403,6 +437,36 @@ export default function DialogsPage() {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+  };
+
+  const handleAssignAppeal = async () => {
+    if (!selectedAppeal || !user) return;
+    setIsAssigning(true);
+    try {
+      // Вызываем новый метод API клиента
+      const updatedAppeal = await apiClient.appeal.assign(
+        selectedAppeal.id,
+        user.id
+      );
+
+      // Обновляем состояние локально для мгновенного отклика UI
+      const updatedAppealData = {
+        ...selectedAppeal,
+        operator: user.id,
+        status: updatedAppeal.data.status, // Обновляем статус, если он изменился
+      };
+      setSelectedAppeal(updatedAppealData);
+      setAppeals((prev) =>
+        prev.map((a) => (a.id === selectedAppeal.id ? updatedAppealData : a))
+      );
+
+      toast.success('Обращение принято в работу');
+    } catch (error) {
+      console.error('Failed to assign appeal:', error);
+      toast.error('Не удалось взять обращение в работу');
+    } finally {
+      setIsAssigning(false);
+    }
   };
 
   const formatTime = (dateString?: string) => {
@@ -562,7 +626,6 @@ export default function DialogsPage() {
           <div className='flex-1 flex flex-col bg-background'>
             {selectedAppeal ? (
               <>
-                {/* Chat Header */}
                 <div className='border-b px-4 py-3 flex items-center justify-between'>
                   <div className='flex items-center gap-3'>
                     <Avatar className='h-10 w-10'>
@@ -576,11 +639,28 @@ export default function DialogsPage() {
                         {selectedAppeal.clientName}
                       </h3>
                       <p className='text-xs text-muted-foreground'>
-                        ID: #{selectedAppeal.id}
+                        {selectedAppeal.operator
+                          ? `Оператор: ${user?.name}`
+                          : 'Не назначен'}
                       </p>
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
+                    {/* КНОПКА "ВЗЯТЬ ОБРАЩЕНИЕ" */}
+                    {!selectedAppeal.operator && (
+                      <Button
+                        onClick={handleAssignAppeal}
+                        disabled={isAssigning}
+                        className='bg-purple-600 hover:bg-purple-700'
+                      >
+                        {isAssigning ? (
+                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        ) : (
+                          <Hand className='mr-2 h-4 w-4' />
+                        )}
+                        Взять обращение
+                      </Button>
+                    )}
                     <Select
                       value={selectedAppeal.status}
                       onValueChange={(value) =>
@@ -627,8 +707,9 @@ export default function DialogsPage() {
                   ) : (
                     <div className='space-y-4'>
                       {messages.map((message) => {
-                        const isUser = message.sender.type === 'user';
-                        const isBot = message.sender.type === 'bot';
+                        const isUser = message?.sender?.type === 'user';
+                        const isBot = message?.sender?.type === 'bot';
+                        console.log(`Message: ID = ${message.id}`);
 
                         return (
                           <div
@@ -644,11 +725,11 @@ export default function DialogsPage() {
                                     isBot
                                       ? selectedAgent?.avatar ||
                                         '/avatars/bot1.png'
-                                      : message.sender.avatar
+                                      : message?.sender?.avatar
                                   }
                                 />
                                 <AvatarFallback>
-                                  {message.sender.name?.[0] ||
+                                  {message?.sender?.name?.[0] ||
                                     (isBot ? 'B' : 'U')}
                                 </AvatarFallback>
                               </Avatar>
@@ -677,11 +758,11 @@ export default function DialogsPage() {
                                     isUser ? 'text-right' : ''
                                   }`}
                                 >
-                                  {formatTime(message.created_at)}
+                                  {formatTime(message?.created_at)}
                                 </p>
-                                {message.sender.name && (
+                                {message?.sender?.name && (
                                   <p className='text-xs text-muted-foreground'>
-                                    • {message.sender.name}
+                                    • {message?.sender?.name}
                                   </p>
                                 )}
                               </div>
@@ -713,10 +794,16 @@ export default function DialogsPage() {
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           onKeyPress={handleKeyPress}
-                          placeholder='Введите сообщение...'
+                          placeholder={
+                            selectedAppeal.operator
+                              ? 'Введите сообщение...'
+                              : 'Возьмите обращение в работу, чтобы ответить'
+                          }
                           className='pr-20'
                           disabled={
-                            isSending || selectedAppeal.status === 'closed'
+                            isSending ||
+                            selectedAppeal.status === 'closed' ||
+                            !selectedAppeal.operator
                           }
                         />
                         <div className='absolute right-2 bottom-2 flex gap-1'>
@@ -742,7 +829,8 @@ export default function DialogsPage() {
                       disabled={
                         !newMessage.trim() ||
                         isSending ||
-                        selectedAppeal.status === 'closed'
+                        selectedAppeal.status === 'closed' ||
+                        !selectedAppeal.operator
                       }
                       className='bg-purple-600 hover:bg-purple-700'
                       size='icon'

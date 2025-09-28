@@ -57,7 +57,7 @@ export const API_ENDPOINTS = {
     create: '/api/v1/chat/',
     get: (id: number) => `/api/v1/chat/${id}`,
     list: (infoFlowId: number) => `/api/v1/info_flow/${infoFlowId}/chats`,
-    messages: (appealId: number) => `/api/v1/message/${appealId}/list`,
+    messages: (appealId: number) => `/api/v1/message/${appealId}/list/`,
     sendMessage: '/api/v1/message/',
   },
 

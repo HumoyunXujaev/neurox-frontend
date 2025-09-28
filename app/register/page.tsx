@@ -89,7 +89,8 @@ export default function RegisterPage() {
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       numbers: /\d/.test(password),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password),
+      // special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     };
 
     Object.values(checks).forEach((check) => {
@@ -124,7 +125,7 @@ export default function RegisterPage() {
       return false;
     }
 
-    if (passwordStrength.strength < 80) {
+    if (passwordStrength.strength < 100) {
       toast.error('Пароль должен быть более надежным');
       return false;
     }
@@ -372,11 +373,11 @@ export default function RegisterPage() {
                         </span>
                         <span
                           className={`font-medium ${
-                            passwordStrength.strength >= 80
+                            passwordStrength.strength >= 100
                               ? 'text-green-600'
-                              : passwordStrength.strength >= 60
+                              : passwordStrength.strength >= 80
                               ? 'text-blue-600'
-                              : passwordStrength.strength >= 40
+                              : passwordStrength.strength >= 60
                               ? 'text-yellow-600'
                               : 'text-red-600'
                           }`}
@@ -396,6 +397,7 @@ export default function RegisterPage() {
                           'Заглавные буквы': passwordStrength.checks.uppercase,
                           'Строчные буквы': passwordStrength.checks.lowercase,
                           Цифры: passwordStrength.checks.numbers,
+                          'Спец. символ': passwordStrength.checks.special,
                         }).map(([label, check]) => (
                           <div key={label} className='flex items-center gap-1'>
                             {check ? (
@@ -500,7 +502,7 @@ export default function RegisterPage() {
                   disabled={
                     isLoading ||
                     !agreedToTerms ||
-                    passwordStrength.strength < 80
+                    passwordStrength.strength < 100
                   }
                 >
                   {isLoading ? (

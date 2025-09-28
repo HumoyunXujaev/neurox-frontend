@@ -349,7 +349,7 @@ class ApiClient {
       assign: (id: number, operatorId: number) =>
         this.backendClient.patch<Appeal>(API_ENDPOINTS.appeal.assign(id), {
           operator: operatorId,
-          is_ruled_by_bot: false
+          is_ruled_by_bot: false,
         }),
 
       close: (id: number) =>

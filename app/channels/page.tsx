@@ -272,9 +272,6 @@ export default function ChannelsPage() {
   // Check channel status
   const getChannelStatus = (channel: InfoFlow) => {
     // Check if channel has required data
-    if (channel.type === 'telegram' && !channel.data?.bot_token) {
-      return 'not_configured';
-    }
     if (channel.type === 'instagram' && !channel.data?.access_token) {
       return 'not_configured';
     }
@@ -485,7 +482,8 @@ export default function ChannelsPage() {
             <div className='flex items-center gap-2'>
               <span className='text-muted-foreground'>Статус подключения:</span>
               <span className='text-red-500 flex items-center gap-1'>
-                Не подключено
+                {getStatusBadge(getChannelStatus(selectedChannel)) || 'активен'}
+
                 <AlertCircle className='h-4 w-4' />
               </span>
             </div>
@@ -501,187 +499,57 @@ export default function ChannelsPage() {
                     readOnly
                   />
                 </div>
-                <div className='flex gap-2'>
+
+                {status === 'active' ? (
+                  <Button
+                    className='bg-green-600 hover:bg-green-700 text-white'
+                    disabled
+                  >
+                    <CheckCircle className='h-4 w-4 mr-2' />
+                    ПОДКЛЮЧЕНО
+                  </Button>
+                ) : (
                   <Button className='bg-purple-600 hover:bg-purple-700 text-white'>
                     <LinkIcon className='h-4 w-4 mr-2' />
                     ПОДКЛЮЧИТЬ
                   </Button>
-                  <Button
-                    variant='outline'
-                    className='border-border text-muted-foreground bg-transparent'
-                  >
-                    ОТКЛЮЧИТЬ
-                  </Button>
-                </div>
+                )}
               </div>
             )}
 
             {selectedChannel.type === 'instagram' && (
               <div className='flex gap-2 flex-wrap'>
-                <Button
-                  className='bg-purple-600 hover:bg-purple-700 text-white'
-                  onClick={() => handleConnectChannel(selectedChannel)}
-                  disabled={isConnecting}
-                >
-                  {isConnecting ? (
-                    <>
-                      <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
-                      Подключение...
-                    </>
-                  ) : (
-                    <>
-                      <LinkIcon className='h-4 w-4 mr-2' />
-                      ПОДКЛЮЧИТЬ ЧЕРЕЗ INSTAGRAM
-                    </>
-                  )}
-                </Button>
-                <Button className='bg-blue-600 hover:bg-blue-700 text-white'>
-                  ПОДКЛЮЧИТЬ ЧЕРЕЗ FACEBOOK
-                </Button>
-                <Button
-                  variant='outline'
-                  className='border-border text-muted-foreground bg-transparent'
-                >
-                  ОТКЛЮЧИТЬ
-                </Button>
+                {status === 'active' ? (
+                  <Button
+                    className='bg-green-600 hover:bg-green-700 text-white'
+                    disabled
+                  >
+                    <CheckCircle className='h-4 w-4 mr-2' />
+                    ПОДКЛЮЧЕНО
+                  </Button>
+                ) : (
+                  <Button
+                    className='bg-purple-600 hover:bg-purple-700 text-white'
+                    onClick={() => handleConnectChannel(selectedChannel)}
+                    disabled={isConnecting}
+                  >
+                    {isConnecting ? (
+                      <>
+                        <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
+                        Подключение...
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon className='h-4 w-4 mr-2' />
+                        ПОДКЛЮЧИТЬ ЧЕРЕЗ INSTAGRAM
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Settings Cards */}
-        {selectedChannel.type === 'telegram' && (
-          <>
-            {/* Bot Name */}
-            <Card className='bg-card border-border'>
-              <CardHeader className='flex flex-row items-center justify-between'>
-                <CardTitle className='text-foreground flex items-center gap-2'>
-                  <Bot className='h-5 w-5' />
-                  Имя бота
-                </CardTitle>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='text-muted-foreground'
-                >
-                  <HelpCircle className='h-4 w-4' />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <Input
-                  className='bg-background border-border text-foreground'
-                  placeholder='Имя бота'
-                />
-              </CardContent>
-            </Card>
-
-            {/* Admin Settings */}
-            <Card className='bg-card border-border'>
-              <CardHeader className='flex flex-row items-center justify-between'>
-                <CardTitle className='text-foreground flex items-center gap-2'>
-                  <Shield className='h-5 w-5' />
-                  Админ Telegram
-                </CardTitle>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='text-muted-foreground'
-                >
-                  <HelpCircle className='h-4 w-4' />
-                </Button>
-              </CardHeader>
-              <CardContent className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label className='text-foreground'>ID админа</Label>
-                  <Input
-                    className='bg-background border-border text-foreground'
-                    placeholder='ID админа'
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label className='text-foreground'>Админ пароль</Label>
-                  <Input
-                    type='password'
-                    className='bg-background border-border text-foreground'
-                    placeholder='Админ пароль'
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Instructions */}
-            <div className='space-y-2'>
-              {[
-                'Инструкция подключения бота к NEXTBOT',
-                'Инструкция подключения бота к группе',
-                'Инструкция подключения бота к личному аккаунту',
-                'Инструкция получения заявок в telegram бота',
-              ].map((title, index) => (
-                <Collapsible key={index}>
-                  <CollapsibleTrigger asChild>
-                    <Card className='bg-card border-border hover:bg-accent cursor-pointer transition-colors'>
-                      <CardContent className='p-4'>
-                        <div className='flex items-center justify-between'>
-                          <span className='text-foreground'>{title}</span>
-                          <ChevronDown className='h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180' />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <Card className='bg-muted/50 border-border mt-2'>
-                      <CardContent className='p-4'>
-                        <p className='text-muted-foreground text-sm'>
-                          Инструкция будет здесь...
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
-            </div>
-          </>
-        )}
-
-        {selectedChannel.type === 'instagram' && (
-          <>
-            {/* Direct Settings */}
-            <Card className='bg-card border-border'>
-              <CardHeader>
-                <CardTitle className='text-foreground flex items-center gap-2'>
-                  <MessageSquare className='h-5 w-5' />
-                  Настройки Direct
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='flex items-center justify-between'>
-                  <span className='text-foreground'>
-                    Включить агента в Direct
-                  </span>
-                  <Switch />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Comments Settings */}
-            <Card className='bg-card border-border'>
-              <CardHeader>
-                <CardTitle className='text-foreground flex items-center gap-2'>
-                  <Users className='h-5 w-5' />
-                  Настройки комментариев
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='flex items-center justify-between'>
-                  <span className='text-foreground'>
-                    Включить агента в комментариях
-                  </span>
-                  <Switch />
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
       </div>
     );
   };
